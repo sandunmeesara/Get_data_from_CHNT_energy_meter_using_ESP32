@@ -19,7 +19,8 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 
 //pin define for max 485 module
-
+const int8_t rxPin = 16;
+const int8_t txPin = 17;
 const uint8_t dePin = 4;
 
 ModbusRTUMaster modbus(Serial2, dePin); // serial Serial interface, driver enable pin for rs-485 (optional)
@@ -32,7 +33,8 @@ float floatResult;
 
 void setup() {
   Serial.begin(115200); // For debugging
-  Serial2.begin(9600); // Initialize Serial1 for Modbus communication
+  //Serial2.begin(9600); // Initialize Serial1 for Modbus communication
+  modbus.begin(9600, SERIAL_8N1, rxPin, txPin);
 
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
@@ -66,11 +68,8 @@ void loop() {
   client.loop();
 
   // Publish the message to the MQTT topic (for debugging)
-  for(int i=0;i<1000;i++){
-    String payload = String(i);
-    client.publish(sensor_topic, payload.c_str());
-    delay(1000); // Update interval (adjust as needed)
-  }
+  client.publish(sensor_topic, "Test....");
+  delay(1000); // Update interval (adjust as needed)
 
 //print Software version
   dataAddress = 0x00;
