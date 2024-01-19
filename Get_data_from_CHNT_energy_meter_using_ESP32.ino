@@ -29,6 +29,7 @@ ModbusRTUMaster modbus(Serial2, dePin); // serial Serial interface, driver enabl
 uint16_t holdingRegisters[2];
 uint32_t total,x;
 int dataAddress;
+uint16_t UrAt,IrAt;
 float floatResult;
 
 
@@ -101,13 +102,15 @@ void loop() {
   
   //print Current Transformer Rate(IrAt)
   dataAddress = 0x06;
-  Serial.println("Current Transformer Rate(IrAt) : " + String(readIntData(dataAddress)));
+  IrAt = readIntData(dataAddress);
+  Serial.println("Current Transformer Rate(IrAt) : " + String(IrAt));
   Energy_Meter_Data["IrAt"] = readIntData(dataAddress);
   
 
   //print Voltage Transformer Rate(UrAt)
   dataAddress = 0x07;
-  Serial.println("Voltage Transformer Rate(UrAt) : " + String(readIntData(dataAddress)));
+  UrAt = readIntData(dataAddress);
+  Serial.println("Voltage Transformer Rate(UrAt) : " + String(UrAt));
   Energy_Meter_Data["UrAt"] = readIntData(dataAddress);
 
   //print Rotating Display Time(s)
@@ -136,103 +139,103 @@ void loop() {
 
   //print Three Phase line voltage(Uab)
   dataAddress = 0x2000;
-  floatResult = readFloatData(dataAddress) * 0.1;
+  floatResult = readFloatData(dataAddress) * UrAt * 0.1;
   Serial.println("Uab : " + String(floatResult) + "v");
   Voltage_Data["Uab"] = String(floatResult);
 
   //print Three Phase line voltage(Ubc)
   dataAddress = 0x2002;
-  floatResult = readFloatData(dataAddress) * 0.1;
+  floatResult = readFloatData(dataAddress) * UrAt * 0.1;
   Serial.println("Ubc : " + String(floatResult) + "v");
   Voltage_Data["Ubc"] = String(floatResult);
 
   //print Three Phase line voltage(Uca)
   dataAddress = 0x2004;
-  floatResult = readFloatData(dataAddress) * 0.1;
+  floatResult = readFloatData(dataAddress) * UrAt * 0.1;
   Serial.println("Uca : " + String(floatResult) + "v");
   Voltage_Data["Uca"] = String(floatResult);
 
   //print Three Phase Phase voltage(Ua)
   dataAddress = 0x2006;
-  floatResult = readFloatData(dataAddress) * 0.1;
+  floatResult = readFloatData(dataAddress) * UrAt * 0.1;
   Serial.println("Ua : " + String(floatResult) + "v");
   Voltage_Data["Ua"] = String(floatResult);
 
   //print Three Phase Phase voltage(Ub)
   dataAddress = 0x2008;
-  floatResult = readFloatData(dataAddress) * 0.1;
+  floatResult = readFloatData(dataAddress) * UrAt * 0.1;
   Serial.println("Ub : " + String(floatResult) + "v");
   Voltage_Data["Ub"] = String(floatResult);
 
   //print Three Phase Phase voltage(Uc)
   dataAddress = 0x200A;
-  floatResult = readFloatData(dataAddress) * 0.1;
+  floatResult = readFloatData(dataAddress) * UrAt * 0.1;
   Serial.println("Uc : " + String(floatResult) + "v");
   Voltage_Data["Uc"] = String(floatResult);
 
   //print Three Phase Current(Ia)
   dataAddress = 0x200C;
-  floatResult = readFloatData(dataAddress) * 0.001;
+  floatResult = readFloatData(dataAddress) * IrAt * 0.001;
   Serial.println("Ia : " + String(floatResult) + "A");
   Current_Data["Ia"] = String(floatResult);
 
   //print Three Phase Current(Ib)
   dataAddress = 0x200E;
-  floatResult = readFloatData(dataAddress) * 0.001;
+  floatResult = readFloatData(dataAddress) * IrAt * 0.001;
   Serial.println("Ib : " + String(floatResult) + "A");
   Current_Data["Ib"] = String(floatResult);
 
   //print Three Phase Current(Ic)
   dataAddress = 0x2010;
-  floatResult = readFloatData(dataAddress) * 0.001;
+  floatResult = readFloatData(dataAddress) * IrAt * 0.001;
   Serial.println("Ic : " + String(floatResult) + "A");
   Current_Data["Ic"] = String(floatResult);
 
   //print Combined Active Power(Pt)
   dataAddress = 0x2012;
-  floatResult = readFloatData(dataAddress) * 0.1;
+  floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt * 0.1;
   Serial.println("Pt : " + String(floatResult) + "W");
   Power_Data["Pt"] = String(floatResult);
 
   //print A Phase active power(Pa)
   dataAddress = 0x2014;
-  floatResult = readFloatData(dataAddress) * 0.1;
+  floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt * 0.1;
   Serial.println("Pa : " + String(floatResult) + "W");
   Power_Data["Pa"] = String(floatResult);
 
   //print B Phase active power(Pb)
   dataAddress = 0x2016;
-  floatResult = readFloatData(dataAddress) * 0.1;
+  floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt * 0.1;
   Serial.println("Pb : " + String(floatResult) + "W");
   Power_Data["Pb"] = String(floatResult);
 
   //print C Phase active power(Pc)
   dataAddress = 0x2018;
-  floatResult = readFloatData(dataAddress) * 0.1;
+  floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt * 0.1;
   Serial.println("Pc : " + String(floatResult) + "W");
   Power_Data["Pc"] = String(floatResult);
 
   //print Combined Reactive Power(Qt)
   dataAddress = 0x201A;
-  floatResult = readFloatData(dataAddress) * 0.1;
+  floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt * 0.1;
   Serial.println("Qt : " + String(floatResult) + "var");
   Power_Data["Qt"] = String(floatResult);
 
   //print A Phase Reactive Power(Qa)
   dataAddress = 0x201C;
-  floatResult = readFloatData(dataAddress) * 0.1;
+  floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt * 0.1;
   Serial.println("Qa : " + String(floatResult) + "var");
   Power_Data["Qa"] = String(floatResult);
 
   //print B Phase Reactive Power(Qb)
   dataAddress = 0x201E;
-  floatResult = readFloatData(dataAddress) * 0.1;
+  floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt * 0.1;
   Serial.println("Qb : " + String(floatResult) + "var");
   Power_Data["Qb"] = String(floatResult);
 
   //print C Phase Reactive Power(Qc)
   dataAddress = 0x2020;
-  floatResult = readFloatData(dataAddress) * 0.1;
+  floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt * 0.1;
   Serial.println("Qc : " + String(floatResult) + "var");
   Power_Data["Qc"] = String(floatResult);
 
@@ -266,39 +269,39 @@ void loop() {
   Serial.println("Frequency : " + String(floatResult) + "Hz");
   Power_Data["Freq."] = String(floatResult);
 
-  //print Forward Total Active Energy 
+  //print Forward Total Active Energy - ImpEp
   dataAddress = 0x101E;
-  floatResult = readFloatData(dataAddress);
-  Serial.println("Forward total active energy  : " + String(floatResult) + "kWh");
-  Power_Secondary_Data["Forw_Act_Ene."] = String(floatResult);
+  floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt;
+  Serial.println("Forward total active energy(ImpEp)  : " + String(floatResult) + "kWh");
+  Power_Secondary_Data["ImpEp"] = String(floatResult);
 
-  //print Reverse Total Active Energy 
+  //print Reverse Total Active Energy - ExpEp
   dataAddress = 0x1028;
-  floatResult = readFloatData(dataAddress);
-  Serial.println("Reverse total active energy  : " + String(floatResult) + "kWh");
-  Power_Secondary_Data["Reve_Act_Ene."] = String(floatResult);
+  floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt;
+  Serial.println("Reverse total active energy(ExpEp)  : " + String(floatResult) + "kWh");
+  Power_Secondary_Data["ExpEp"] = String(floatResult);
 
   //print Total reactive energy of the first quadrant 
   dataAddress = 0x1032;
-  floatResult = readFloatData(dataAddress);
+  floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt;
   Serial.println("Total reactive energy of the first quadrant : " + String(floatResult) + "kvarh");
   Power_Secondary_Data["1Q"] = String(floatResult);
 
   //print Total reactive energy of the second quadrant 
   dataAddress = 0x103C;
-  floatResult = readFloatData(dataAddress);
+  floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt;
   Serial.println("Total reactive energy of the second quadrant : " + String(floatResult) + "kvarh");
   Power_Secondary_Data["2Q"] = String(floatResult);
 
   //print Total reactive energy of the third quadrant 
   dataAddress = 0x1046;
-  floatResult = readFloatData(dataAddress);
+  floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt;
   Serial.println("Total reactive energy of the third quadrant : " + String(floatResult) + "kvarh");
   Power_Secondary_Data["3Q"] = String(floatResult);
   
   //print Total reactive energy of the fourth quadrant 
   dataAddress = 0x1050;
-  floatResult = readFloatData(dataAddress);
+  floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt;
   Serial.println("Total reactive energy of the fourth quadrant : " + String(floatResult) + "kvarh");
   Power_Secondary_Data["4Q"] = String(floatResult);
 
