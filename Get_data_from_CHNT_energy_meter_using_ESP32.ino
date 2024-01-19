@@ -1,6 +1,7 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <ModbusRTUMaster.h>
+#include <ArduinoJson.h>
 
 // Replace with your WiFi credentials
 const char* ssid = "Sandun Meesara Xperia XZ2";
@@ -67,9 +68,24 @@ void loop() {
   }
   client.loop();
 
-  // Publish the message to the MQTT topic (for debugging)
+  // Create a JSON object
+  StaticJsonDocument<200> jsonDoc;
+  jsonDoc["sensor"] = "temperature";
+  jsonDoc["value"] = 25.5;
+
+  // Serialize the JSON object to a string
+  char jsonString[200];
+  serializeJson(jsonDoc, jsonString);
+
+  // Publish the JSON string to a MQTT topic
+  const char* mqttTopic = "your-MQTT-topic";
+  client.publish(mqttTopic, jsonString);
+
+  Serial.println("Message sent to MQTT");
+
+  /*// Publish the message to the MQTT topic (for debugging)
   client.publish(sensor_topic, "Test....");
-  delay(1000); // Update interval (adjust as needed)
+  delay(1000); // Update interval (adjust as needed)*/
 
 //print Software version
   dataAddress = 0x00;
