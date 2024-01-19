@@ -1,6 +1,5 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
-#include <SoftwareSerial.h>
 #include <ModbusRTUMaster.h>
 
 // Replace with your WiFi credentials
@@ -20,12 +19,10 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 
 //pin define for max 485 module
-const uint8_t rxPin = 15;
-const uint8_t txPin = 2;
+
 const uint8_t dePin = 4;
 
-SoftwareSerial mySerial(rxPin, txPin);
-ModbusRTUMaster modbus(mySerial, dePin); // serial port, driver enable pin for rs-485 (optional)
+ModbusRTUMaster modbus(Serial2, dePin); // serial Serial interface, driver enable pin for rs-485 (optional)
 
 uint16_t holdingRegisters[2];
 uint32_t total,x;
@@ -34,8 +31,8 @@ float floatResult;
 
 
 void setup() {
-  Serial.begin(115200);
-  modbus.begin(9600); // baud rate, config (optional)
+  Serial.begin(115200); // For debugging
+  Serial2.begin(9600); // Initialize Serial1 for Modbus communication
 
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
@@ -68,7 +65,7 @@ void loop() {
   }
   client.loop();
 
-  // Publish the message to the MQTT topic
+  // Publish the message to the MQTT topic (for debugging)
   for(int i=0;i<1000;i++){
     String payload = String(i);
     client.publish(sensor_topic, payload.c_str());
