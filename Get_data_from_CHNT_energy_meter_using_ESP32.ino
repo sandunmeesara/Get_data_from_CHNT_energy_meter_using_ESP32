@@ -76,44 +76,44 @@ void loop() {
 
   // Create a JSON objects for each data categories
   StaticJsonDocument<200> jsonDoc1;
-  JsonObject Energy_Meter_Data = jsonDoc1.createNestedObject("Energy_Meter_Data");
-  JsonObject Voltage_Data = jsonDoc1.createNestedObject("Voltage_Data");
-  JsonObject Current_Data = jsonDoc1.createNestedObject("Current_Data");
+  //JsonObject Energy_Meter_Data = jsonDoc1.createNestedObject("Energy_Meter_Data");
+  //JsonObject Voltage_Data = jsonDoc1.createNestedObject("Voltage_Data");
+  //JsonObject Current_Data = jsonDoc1.createNestedObject("Current_Data");
 
   StaticJsonDocument<200> jsonDoc2;
-  JsonObject Power_Data = jsonDoc2.createNestedObject("Power_Data");
+  //JsonObject Power_Data = jsonDoc2.createNestedObject("Power_Data");
 
   StaticJsonDocument<200> jsonDoc3;
-  JsonObject Power_Secondary_Data = jsonDoc3.createNestedObject("Power_Secondary_Data");
+  //JsonObject Power_Secondary_Data = jsonDoc3.createNestedObject("Power_Secondary_Data");
 
   
   //print Software version
   dataAddress = 0x00;
   Serial.println("Software version : " + String(readIntData(dataAddress)));
-  //Energy_Meter_Data["Soft_Ver."] = readIntData(dataAddress);
+  //jsonDoc1["Soft_Ver."] = readIntData(dataAddress);
  
   //print Programming Code
   dataAddress = 0x01;
   Serial.println("Programming Code : " + String(readIntData(dataAddress)));
-  //Energy_Meter_Data["Pro_Code"] = readIntData(dataAddress);
+  //jsonDoc1["Pro_Code"] = readIntData(dataAddress);
 
   //print Network Selection
   dataAddress = 0x03;
   Serial.println("Network Selection : " + String(readIntData(dataAddress)));
-  //Energy_Meter_Data["Net_Select"] = readIntData(dataAddress);
+  //jsonDoc1["Net_Select"] = readIntData(dataAddress);
   
   //print Current Transformer Rate(IrAt)
   dataAddress = 0x06;
   IrAt = readIntData(dataAddress);
   Serial.println("Current Transformer Rate(IrAt) : " + String(IrAt));
-  Energy_Meter_Data["IrAt"] = readIntData(dataAddress);
+  jsonDoc1["IrAt"] = readIntData(dataAddress);
   
 
   //print Voltage Transformer Rate(UrAt)
   dataAddress = 0x07;
   UrAt = readIntData(dataAddress);
   Serial.println("Voltage Transformer Rate(UrAt) : " + String(UrAt));
-  Energy_Meter_Data["UrAt"] = readIntData(dataAddress);
+  jsonDoc1["UrAt"] = readIntData(dataAddress);
 
   //print Rotating Display Time(s)
   dataAddress = 0x0A;
@@ -126,186 +126,186 @@ void loop() {
   //print Protocol Switching
   dataAddress = 0x2C;
   Serial.println("Protocol Switching : " + String(readIntData(dataAddress)));
-  //Energy_Meter_Data["Protocol"] = readIntData(dataAddress);
+  //jsonDoc1["Protocol"] = readIntData(dataAddress);
 
   //print Communication Baud Rate
   dataAddress = 0x2D;
   Serial.println("Communication Baud Rate : " + String(readIntData(dataAddress)));
-  //Energy_Meter_Data["Baud_Rate"] = readIntData(dataAddress);
+  //jsonDoc1["Baud_Rate"] = readIntData(dataAddress);
 
   //print Communication Address
   dataAddress = 0x2E;
   Serial.println("Communication Address : " + String(readIntData(dataAddress)));
-  //Energy_Meter_Data["D_Id"] = readIntData(dataAddress);
+  //jsonDoc1["D_Id"] = readIntData(dataAddress);
 
 
   //print Three Phase line voltage(Uab)
   dataAddress = 0x2000;
   floatResult = readFloatData(dataAddress) * UrAt * 0.1;
   Serial.println("Uab : " + String(floatResult) + "v");
-  Voltage_Data["Uab"] = floatResult;
+  jsonDoc1["Uab"] = floatResult;
 
   //print Three Phase line voltage(Ubc)
   dataAddress = 0x2002;
   floatResult = readFloatData(dataAddress) * UrAt * 0.1;
   Serial.println("Ubc : " + String(floatResult) + "v");
-  Voltage_Data["Ubc"] = floatResult;
+  jsonDoc1["Ubc"] = floatResult;
 
   //print Three Phase line voltage(Uca)
   dataAddress = 0x2004;
   floatResult = readFloatData(dataAddress) * UrAt * 0.1;
   Serial.println("Uca : " + String(floatResult) + "v");
-  Voltage_Data["Uca"] = floatResult;
+  jsonDoc1["Uca"] = floatResult;
 
   //print Three Phase Phase voltage(Ua)
   dataAddress = 0x2006;
   floatResult = readFloatData(dataAddress) * UrAt * 0.1;
   Serial.println("Ua : " + String(floatResult) + "v");
-  Voltage_Data["Ua"] = floatResult;
+  jsonDoc1["Ua"] = floatResult;
 
   //print Three Phase Phase voltage(Ub)
   dataAddress = 0x2008;
   floatResult = readFloatData(dataAddress) * UrAt * 0.1;
   Serial.println("Ub : " + String(floatResult) + "v");
-  Voltage_Data["Ub"] = floatResult;
+  jsonDoc1["Ub"] = floatResult;
 
   //print Three Phase Phase voltage(Uc)
   dataAddress = 0x200A;
   floatResult = readFloatData(dataAddress) * UrAt * 0.1;
   Serial.println("Uc : " + String(floatResult) + "v");
-  Voltage_Data["Uc"] = floatResult;
+  jsonDoc1["Uc"] = floatResult;
 
   //print Three Phase Current(Ia)
   dataAddress = 0x200C;
   floatResult = readFloatData(dataAddress) * IrAt * 0.001;
   Serial.println("Ia : " + String(floatResult) + "A");
-  Current_Data["Ia"] = floatResult;
+  jsonDoc1["Ia"] = floatResult;
 
   //print Three Phase Current(Ib)
   dataAddress = 0x200E;
   floatResult = readFloatData(dataAddress) * IrAt * 0.001;
   Serial.println("Ib : " + String(floatResult) + "A");
-  Current_Data["Ib"] = floatResult;
+  jsonDoc1["Ib"] = floatResult;
 
   //print Three Phase Current(Ic)
   dataAddress = 0x2010;
   floatResult = readFloatData(dataAddress) * IrAt * 0.001;
   Serial.println("Ic : " + String(floatResult) + "A");
-  Current_Data["Ic"] = floatResult;
+  jsonDoc1["Ic"] = floatResult;
 
   //print Combined Active Power(Pt)
   dataAddress = 0x2012;
   floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt * 0.1;
   Serial.println("Pt : " + String(floatResult) + "W");
-  Power_Data["Pt"] = floatResult;
+  jsonDoc2["Pt"] = floatResult;
 
   //print A Phase active power(Pa)
   dataAddress = 0x2014;
   floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt * 0.1;
   Serial.println("Pa : " + String(floatResult) + "W");
-  Power_Data["Pa"] = floatResult;
+  jsonDoc2["Pa"] = floatResult;
 
   //print B Phase active power(Pb)
   dataAddress = 0x2016;
   floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt * 0.1;
   Serial.println("Pb : " + String(floatResult) + "W");
-  Power_Data["Pb"] = floatResult;
+  jsonDoc2["Pb"] = floatResult;
 
   //print C Phase active power(Pc)
   dataAddress = 0x2018;
   floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt * 0.1;
   Serial.println("Pc : " + String(floatResult) + "W");
-  Power_Data["Pc"] = floatResult;
+  jsonDoc2["Pc"] = floatResult;
 
   //print Combined Reactive Power(Qt)
   dataAddress = 0x201A;
   floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt * 0.1;
   Serial.println("Qt : " + String(floatResult) + "var");
-  Power_Data["Qt"] = floatResult;
+  jsonDoc2["Qt"] = floatResult;
 
   //print A Phase Reactive Power(Qa)
   dataAddress = 0x201C;
   floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt * 0.1;
   Serial.println("Qa : " + String(floatResult) + "var");
-  Power_Data["Qa"] = floatResult;
+  jsonDoc2["Qa"] = floatResult;
 
   //print B Phase Reactive Power(Qb)
   dataAddress = 0x201E;
   floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt * 0.1;
   Serial.println("Qb : " + String(floatResult) + "var");
-  Power_Data["Qb"] = floatResult;
+  jsonDoc2["Qb"] = floatResult;
 
   //print C Phase Reactive Power(Qc)
   dataAddress = 0x2020;
   floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt * 0.1;
   Serial.println("Qc : " + String(floatResult) + "var");
-  Power_Data["Qc"] = floatResult;
+  jsonDoc2["Qc"] = floatResult;
 
   //print Combined Power Factor(PFt)
   dataAddress = 0x202A;
   floatResult = readFloatData(dataAddress) * 0.001;
   Serial.println("PFt : " + String(floatResult));
-  Power_Data["PFt"] = floatResult;
+  jsonDoc2["PFt"] = floatResult;
 
   //print A Phase Power Factor(PFa)
   dataAddress = 0x202C;
   floatResult = readFloatData(dataAddress) * 0.001;
   Serial.println("PFa : " + String(floatResult));
-  Power_Data["PFa"] = floatResult;
+  jsonDoc2["PFa"] = floatResult;
 
   //print B Phase Power Factor(PFb)
   dataAddress = 0x202E;
   floatResult = readFloatData(dataAddress) * 0.001;
   Serial.println("PFb : " + String(floatResult));
-  Power_Data["PDb"] = floatResult;
+  jsonDoc2["PDb"] = floatResult;
 
   //print C Phase Power Factor(PFc)
   dataAddress = 0x2030;
   floatResult = readFloatData(dataAddress) * 0.001;
   Serial.println("PFc : " + String(floatResult));
-  Power_Data["PFc"] = floatResult;
+  jsonDoc2["PFc"] = floatResult;
 
   //print Frequency
   dataAddress = 0x2044;
   floatResult = readFloatData(dataAddress) * 0.01;
   Serial.println("Frequency : " + String(floatResult) + "Hz");
-  Power_Data["Freq."] = floatResult;
+  jsonDoc2["Freq."] = floatResult;
 
   //print Forward Total Active Energy - ImpEp
   dataAddress = 0x101E;
   floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt;
   Serial.println("Forward total active energy(ImpEp)  : " + String(floatResult) + "kWh");
-  Power_Secondary_Data["ImpEp"] = floatResult;
+  jsonDoc3["ImpEp"] = floatResult;
 
   //print Reverse Total Active Energy - ExpEp
   dataAddress = 0x1028;
   floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt;
   Serial.println("Reverse total active energy(ExpEp)  : " + String(floatResult) + "kWh");
-  Power_Secondary_Data["ExpEp"] = floatResult;
+  jsonDoc3["ExpEp"] = floatResult;
 
   //print Total reactive energy of the first quadrant 
   dataAddress = 0x1032;
   floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt;
   Serial.println("Total reactive energy of the first quadrant : " + String(floatResult) + "kvarh");
-  Power_Secondary_Data["1Q"] = floatResult;
+  jsonDoc3["1Q"] = floatResult;
 
   //print Total reactive energy of the second quadrant 
   dataAddress = 0x103C;
   floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt;
   Serial.println("Total reactive energy of the second quadrant : " + String(floatResult) + "kvarh");
-  Power_Secondary_Data["2Q"] = floatResult;
+  jsonDoc3["2Q"] = floatResult;
 
   //print Total reactive energy of the third quadrant 
   dataAddress = 0x1046;
   floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt;
   Serial.println("Total reactive energy of the third quadrant : " + String(floatResult) + "kvarh");
-  Power_Secondary_Data["3Q"] = floatResult;
+  jsonDoc3["3Q"] = floatResult;
   
   //print Total reactive energy of the fourth quadrant 
   dataAddress = 0x1050;
   floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt;
   Serial.println("Total reactive energy of the fourth quadrant : " + String(floatResult) + "kvarh");
-  Power_Secondary_Data["4Q"] = floatResult;
+  jsonDoc3["4Q"] = floatResult;
 
 
   // Serialize the JSON objects to a strings
