@@ -2,10 +2,11 @@
 #include <PubSubClient.h>
 #include <ModbusRTUMaster.h>
 #include <ArduinoJson.h>
+#include "OTA.h"
 
 // Replace with your WiFi credentials
-const char* ssid = "Sandun Meesara Xperia XZ2";
-const char* password = "Sandun6754";
+//const char* ssid = "Sandun Meesara Xperia XZ2";
+//const char* password = "Sandun6754";
 
 // Replace with your MQTT broker details
 const char* mqtt_server = "35.187.228.48";
@@ -39,6 +40,10 @@ void setup() {
 
   Serial.begin(115200); // For debugging
   modbus.begin(9600, SERIAL_8N1, rxPin, txPin);
+  ArduinoOTA.setHostname("54-K_ESP32");
+  setupOTA();
+
+  digitalWrite(2,HIGH);
 
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
@@ -68,7 +73,8 @@ void reconnect() {
 }
 
 void loop() {
-  
+  ArduinoOTA.handle();
+
   if (!client.connected()) {
     reconnect();
   }
