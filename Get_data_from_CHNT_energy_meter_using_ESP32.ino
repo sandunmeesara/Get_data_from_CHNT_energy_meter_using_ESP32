@@ -257,7 +257,7 @@ void loop() {
   dataAddress = 0x202E;
   floatResult = readFloatData(dataAddress) * 0.001;
   Serial.println("PFb : " + String(floatResult));
-  jsonDoc2["PDb"] = floatResult;
+  jsonDoc2["PFb"] = floatResult;
 
   //print C Phase Power Factor(PFc)
   dataAddress = 0x2030;
@@ -367,7 +367,7 @@ void loop() {
   //------------------------------------------------------------------------------------------
 
   Serial.println("---------------------------------------");
-  delay(350);
+  delay(2000);
   
 }
 
