@@ -111,14 +111,14 @@ void loop() {
   dataAddress = 0x06;
   IrAt = readIntData(dataAddress);
   Serial.println("Current Transformer Rate(IrAt) : " + String(IrAt));
-  jsonDoc1["IrAt"] = readIntData(dataAddress);
+  jsonDoc1["IrAt"] = IrAt;
   
 
   //print Voltage Transformer Rate(UrAt)
   dataAddress = 0x07;
   UrAt = readIntData(dataAddress);
   Serial.println("Voltage Transformer Rate(UrAt) : " + String(UrAt));
-  jsonDoc1["UrAt"] = readIntData(dataAddress);
+  jsonDoc1["UrAt"] = UrAt;
 
   //print Rotating Display Time(s)
   dataAddress = 0x0A;
@@ -146,37 +146,37 @@ void loop() {
 
   //print Three Phase line voltage(Uab)
   dataAddress = 0x2000;
-  floatResult = readFloatData(dataAddress) * UrAt * 0.1;
+  floatResult = readFloatData(dataAddress) * 0.1;
   Serial.println("Uab : " + String(floatResult) + "v");
   jsonDoc1["Uab"] = floatResult;
 
   //print Three Phase line voltage(Ubc)
   dataAddress = 0x2002;
-  floatResult = readFloatData(dataAddress) * UrAt * 0.1;
+  floatResult = readFloatData(dataAddress) * 0.1;
   Serial.println("Ubc : " + String(floatResult) + "v");
   jsonDoc1["Ubc"] = floatResult;
 
   //print Three Phase line voltage(Uca)
   dataAddress = 0x2004;
-  floatResult = readFloatData(dataAddress) * UrAt * 0.1;
+  floatResult = readFloatData(dataAddress) * 0.1;
   Serial.println("Uca : " + String(floatResult) + "v");
   jsonDoc1["Uca"] = floatResult;
 
   //print Three Phase Phase voltage(Ua)
   dataAddress = 0x2006;
-  floatResult = readFloatData(dataAddress) * UrAt * 0.1;
+  floatResult = readFloatData(dataAddress) * 0.1;
   Serial.println("Ua : " + String(floatResult) + "v");
   jsonDoc1["Ua"] = floatResult;
 
   //print Three Phase Phase voltage(Ub)
   dataAddress = 0x2008;
-  floatResult = readFloatData(dataAddress) * UrAt * 0.1;
+  floatResult = readFloatData(dataAddress) * 0.1;
   Serial.println("Ub : " + String(floatResult) + "v");
   jsonDoc1["Ub"] = floatResult;
 
   //print Three Phase Phase voltage(Uc)
   dataAddress = 0x200A;
-  floatResult = readFloatData(dataAddress) * UrAt * 0.1;
+  floatResult = readFloatData(dataAddress) * 0.1;
   Serial.println("Uc : " + String(floatResult) + "v");
   jsonDoc1["Uc"] = floatResult;
 
@@ -200,49 +200,49 @@ void loop() {
 
   //print Combined Active Power(Pt)
   dataAddress = 0x2012;
-  floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt * 0.1;
+  floatResult = readFloatData(dataAddress) * IrAt * 0.1;
   Serial.println("Pt : " + String(floatResult) + "W");
   jsonDoc2["Pt"] = floatResult;
 
   //print A Phase active power(Pa)
   dataAddress = 0x2014;
-  floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt * 0.1;
+  floatResult = readFloatData(dataAddress) * IrAt * 0.1;
   Serial.println("Pa : " + String(floatResult) + "W");
   jsonDoc2["Pa"] = floatResult;
 
   //print B Phase active power(Pb)
   dataAddress = 0x2016;
-  floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt * 0.1;
+  floatResult = readFloatData(dataAddress) * IrAt * 0.1;
   Serial.println("Pb : " + String(floatResult) + "W");
   jsonDoc2["Pb"] = floatResult;
 
   //print C Phase active power(Pc)
   dataAddress = 0x2018;
-  floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt * 0.1;
+  floatResult = readFloatData(dataAddress) * IrAt * 0.1;
   Serial.println("Pc : " + String(floatResult) + "W");
   jsonDoc2["Pc"] = floatResult;
 
   //print Combined Reactive Power(Qt)
   dataAddress = 0x201A;
-  floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt * 0.1;
+  floatResult = readFloatData(dataAddress) * IrAt * 0.1;
   Serial.println("Qt : " + String(floatResult) + "var");
   jsonDoc2["Qt"] = floatResult;
 
   //print A Phase Reactive Power(Qa)
   dataAddress = 0x201C;
-  floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt * 0.1;
+  floatResult = readFloatData(dataAddress) * IrAt * 0.1;
   Serial.println("Qa : " + String(floatResult) + "var");
   jsonDoc2["Qa"] = floatResult;
 
   //print B Phase Reactive Power(Qb)
   dataAddress = 0x201E;
-  floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt * 0.1;
+  floatResult = readFloatData(dataAddress) * IrAt * 0.1;
   Serial.println("Qb : " + String(floatResult) + "var");
   jsonDoc2["Qb"] = floatResult;
 
   //print C Phase Reactive Power(Qc)
   dataAddress = 0x2020;
-  floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt * 0.1;
+  floatResult = readFloatData(dataAddress) * IrAt * 0.1;
   Serial.println("Qc : " + String(floatResult) + "var");
   jsonDoc2["Qc"] = floatResult;
 
@@ -262,19 +262,19 @@ void loop() {
   dataAddress = 0x202E;
   floatResult = readFloatData(dataAddress) * 0.001;
   Serial.println("PFb : " + String(floatResult));
-  jsonDoc2["PDb"] = floatResult;
+  jsonDoc3["PFb"] = floatResult;
 
   //print C Phase Power Factor(PFc)
   dataAddress = 0x2030;
   floatResult = readFloatData(dataAddress) * 0.001;
   Serial.println("PFc : " + String(floatResult));
-  jsonDoc2["PFc"] = floatResult;
+  jsonDoc3["PFc"] = floatResult;
 
   //print Frequency
   dataAddress = 0x2044;
   floatResult = readFloatData(dataAddress) * 0.01;
   Serial.println("Frequency : " + String(floatResult) + "Hz");
-  jsonDoc2["Freq."] = floatResult;
+  jsonDoc3["Freq"] = floatResult;
 
   //print Forward Total Active Energy - ImpEp
   dataAddress = 0x101E;
@@ -284,31 +284,31 @@ void loop() {
 
   //print Reverse Total Active Energy - ExpEp
   dataAddress = 0x1028;
-  floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt;
+  floatResult = readFloatData(dataAddress) * IrAt;
   Serial.println("Reverse total active energy(ExpEp)  : " + String(floatResult) + "kWh");
   jsonDoc3["ExpEp"] = floatResult;
 
   //print Total reactive energy of the first quadrant 
   dataAddress = 0x1032;
-  floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt;
+  floatResult = readFloatData(dataAddress) * IrAt;
   Serial.println("Total reactive energy of the first quadrant : " + String(floatResult) + "kvarh");
   jsonDoc3["1Q"] = floatResult;
 
   //print Total reactive energy of the second quadrant 
   dataAddress = 0x103C;
-  floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt;
+  floatResult = readFloatData(dataAddress) * IrAt;
   Serial.println("Total reactive energy of the second quadrant : " + String(floatResult) + "kvarh");
   jsonDoc3["2Q"] = floatResult;
 
   //print Total reactive energy of the third quadrant 
   dataAddress = 0x1046;
-  floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt;
+  floatResult = readFloatData(dataAddress) * IrAt;
   Serial.println("Total reactive energy of the third quadrant : " + String(floatResult) + "kvarh");
   jsonDoc3["3Q"] = floatResult;
   
   //print Total reactive energy of the fourth quadrant 
   dataAddress = 0x1050;
-  floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt;
+  floatResult = readFloatData(dataAddress) * IrAt;
   Serial.println("Total reactive energy of the fourth quadrant : " + String(floatResult) + "kvarh");
   jsonDoc3["4Q"] = floatResult;
 
@@ -329,7 +329,8 @@ void loop() {
   client.publish(sensor_topic, jsonString2);
   delay(350);
   client.publish(sensor_topic, jsonString3);
-
+  delay(350);
+  
   Serial.println("Message sent to MQTT");
   
   //------------------------------------------------------------------------------------------
@@ -372,7 +373,7 @@ void loop() {
   //------------------------------------------------------------------------------------------
 
   Serial.println("---------------------------------------");
-  delay(350);
+  delay(1000);
   
 }
 
