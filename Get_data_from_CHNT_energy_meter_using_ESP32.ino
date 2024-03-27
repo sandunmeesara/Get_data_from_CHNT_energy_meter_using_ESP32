@@ -6,7 +6,7 @@
 
 // Replace with your WiFi credentials
 const char* ssid = "Sandun Meesara Xperia XZ2";
-const char* password = "Sandun6754";
+const char* password = "Sandun6755";
 
 // Replace with your MQTT broker details
 const char* mqtt_server = "35.187.228.48";
@@ -35,6 +35,16 @@ int dataAddress;
 uint16_t UrAt,IrAt;
 float floatResult;
 
+// Proximity sensor settings
+const int sensorPin = 27; // Pin connected to the proximity sensor
+int interruptCounter = 0;
+//QueueHandle_t interruptQueue; // Queue to share interrupt counts between cores
+
+// Function prototypes
+void modbusTask(void* parameter);
+void interruptTask(void* parameter);
+void IRAM_ATTR handleInterrupt();
+
 
 void setup() {
 
@@ -42,7 +52,6 @@ void setup() {
   modbus.begin(9600, SERIAL_8N1, rxPin, txPin);
   //ArduinoOTA.setHostname("54-K_ESP32");
   //setupOTA();
-
 
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
@@ -53,8 +62,28 @@ void setup() {
   Serial.println("WiFi connected");
 
   client.setServer(mqtt_server, mqtt_port);
-  //client.setSocketTimeout(60);  // Set the timeout to 10 seconds (adjust as needed)
   client.setCallback(callback); // Optional for receiving messages
+
+  //interruptQueue = xQueueCreate(1, sizeof(int)); // Create a queue for interrupt counts, with a capacity of 1 integer
+
+  xTaskCreatePinnedToCore(
+    modbusTask,        // Function to run on core 0
+    "ModbusTask",      // Task name
+    10000,             // Stack size (bytes)
+    NULL,              // Parameter to pass to the task
+    1,                 // Priority (1 is default)
+    NULL,              // Task handle
+    0);                // Core to run the task (0 is core 0)
+
+  xTaskCreatePinnedToCore(
+    interruptTask,     // Function to run on core 1
+    "InterruptTask",   // Task name
+    10000,             // Stack size (bytes)
+    NULL,              // Parameter to pass to the task
+    1,                 // Priority (1 is default)
+    NULL,              // Task handle
+    1);                // Core to run the task (1 is core 1)
+
 }
 
 void reconnect() {
@@ -79,7 +108,12 @@ void loop() {
   }
   client.loop();
 
-  // Create a JSON objects for each data categories
+}
+
+void modbusTask(void* parameter) {
+  // Your Modbus and MQTT code here
+  for (;;) {
+    // Create a JSON objects for each data categories
   StaticJsonDocument<200> jsonDoc1;
   //JsonObject Energy_Meter_Data = jsonDoc1.createNestedObject("Energy_Meter_Data");
   //JsonObject Voltage_Data = jsonDoc1.createNestedObject("Voltage_Data");
@@ -312,6 +346,8 @@ void loop() {
   Serial.println("Total reactive energy of the fourth quadrant : " + String(floatResult) + "kvarh");
   jsonDoc3["4Q"] = floatResult;
 
+  //Serial.println(interruptCounter);
+  jsonDoc3["Count"] = interruptCounter; 
 
   // Serialize the JSON objects to a strings
   char jsonString1[200];
@@ -375,8 +411,24 @@ void loop() {
   Serial.println("---------------------------------------");
   delay(1000);
   
+  }
 }
 
+void IRAM_ATTR handleInterrupt() {
+  interruptCounter++; // Increment the counter on each interrupt
+  //xQueueSendFromISR(interruptQueue, &interruptCounter, NULL); // Send interrupt count to the queue
+}
+
+void interruptTask(void* parameter) {
+  pinMode(sensorPin, INPUT_PULLUP); // Set the sensor pin as input with internal pull-up resistor
+  attachInterrupt(digitalPinToInterrupt(sensorPin), handleInterrupt, RISING); // Attach interrupt to the sensor pin
+
+  //int receivedCount = 0;
+  for (;;) {
+    //Serial.println(interruptCounter);
+    vTaskDelay(pdMS_TO_TICKS(1000)); // Delay for 1000 milliseconds
+  }
+}
 
 uint16_t readIntData(int dataAddress){
   modbus.readHoldingRegisters(1, dataAddress, holdingRegisters,1);
