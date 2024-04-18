@@ -1,25 +1,33 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
+#include <WiFiClientSecure.h>
 #include <ModbusRTUMaster.h>
 #include <ArduinoJson.h>
 //#include "OTA.h"
 
 // Replace with your WiFi credentials
-const char* ssid = "Sandun Meesara Xperia XZ2";
-const char* password = "Sandun6755";
+const char* ssid = "ENG";
+const char* password = "123456789#";
 
 // Replace with your MQTT broker details
-const char* mqtt_server = "35.187.228.48";
+const char* mqtt_server = "94ef1409b9734265ae0fb137d6ca40ed.s1.eu.hivemq.cloud";
+const int mqtt_port = 8883; // MQTT with TLS usually uses port 8883
+const char* mqtt_user = "mpliot";
+const char* mqtt_password = "MPLiot@2024";
+
+/*// Replace with your MQTT broker details
+const char* mqtt_server = "192.168.1.50";
 const int mqtt_port = 1883; // Default MQTT port
 const char* mqtt_user = "sandun";
 const char* mqtt_password = "Sandun2000";
 //const char* mqtt_user = "azurevm01";
-//const char* mqtt_password = "azurevm01passwd";
+//const char* mqtt_password = "azurevm01passwd";*/
 
 // Replace with your sensor topic
-const char* sensor_topic = "Machine_01";
+const char* sensor_topic = "Machine_05";
 
-WiFiClient espClient;
+//WiFiClient espClient;
+WiFiClientSecure espClient;
 PubSubClient client(espClient);
 
 //pin define for max 485 module
@@ -39,6 +47,10 @@ float floatResult;
 const int sensorPin = 27; // Pin connected to the proximity sensor
 int interruptCounter = 0;
 //QueueHandle_t interruptQueue; // Queue to share interrupt counts between cores
+volatile unsigned long previousMillis = 0;
+volatile unsigned long elapsedTime = 0;
+float elapsedTimef = 0.0;
+volatile bool firstInterrupt = true;
 
 // Function prototypes
 void modbusTask(void* parameter);
@@ -50,6 +62,7 @@ void setup() {
 
   Serial.begin(115200); // For debugging
   modbus.begin(9600, SERIAL_8N1, rxPin, txPin);
+  pinMode(2,OUTPUT);
   //ArduinoOTA.setHostname("54-K_ESP32");
   //setupOTA();
 
@@ -60,6 +73,9 @@ void setup() {
   }
   Serial.println("");
   Serial.println("WiFi connected");
+
+  // Disable server certificate verification
+  espClient.setInsecure();
 
   client.setServer(mqtt_server, mqtt_port);
   client.setCallback(callback); // Optional for receiving messages
@@ -89,9 +105,12 @@ void setup() {
 void reconnect() {
 
   while (!client.connected()) {
-    if (client.connect("ESP32Client", mqtt_user, mqtt_password)) {
+    Serial.print("Attempting MQTT connection...");
+    if (client.connect("ESP32Client5", mqtt_user, mqtt_password)) {
       Serial.println("MQTT connected");
+      digitalWrite(2,HIGH);
     } else {
+      digitalWrite(2,LOW);
       Serial.print("failed, rc=");
       Serial.print(client.state());
       Serial.println(" try again in 5 seconds");
@@ -347,7 +366,7 @@ void modbusTask(void* parameter) {
   jsonDoc3["4Q"] = floatResult;
 
   //Serial.println(interruptCounter);
-  jsonDoc3["Count"] = interruptCounter; 
+  jsonDoc3["Cycle_time(s)"] = elapsedTimef; 
 
   // Serialize the JSON objects to a strings
   char jsonString1[200];
@@ -417,6 +436,19 @@ void modbusTask(void* parameter) {
 void IRAM_ATTR handleInterrupt() {
   interruptCounter++; // Increment the counter on each interrupt
   //xQueueSendFromISR(interruptQueue, &interruptCounter, NULL); // Send interrupt count to the queue
+  unsigned long currentMillis = millis(); // Get the current time
+
+  if (firstInterrupt) {
+    previousMillis = currentMillis; // Save the time of the first interrupt
+    firstInterrupt = false;
+  } else {
+    elapsedTime = (currentMillis - previousMillis); // Calculate the time difference between interrupts
+    //Serial.println(elapsedTime);
+    elapsedTimef = elapsedTime/1000;
+    Serial.println(elapsedTimef);
+    previousMillis = currentMillis; // Save the time of the second interrupt for the next calculation
+  }
+
 }
 
 void interruptTask(void* parameter) {
