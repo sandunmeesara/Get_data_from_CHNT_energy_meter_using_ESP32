@@ -11,6 +11,10 @@
 const char* ssid = "ENG";
 const char* password = "123456789#";
 
+//Telnet server object
+WiFiServer telnetServer(23);
+WiFiClient telnetClient;
+
 // Replace with your MQTT broker details
 const char* mqtt_server = "192.168.1.50";
 const int mqtt_port = 1883; // Default MQTT port
@@ -60,6 +64,7 @@ void setup() {
   //ArduinoOTA.setHostname("Sandun");
   //ArduinoOTA.setPassword("IOT@mpl");
   setupOTA(sensor_topic);
+  telnetServer.begin();
 
   /*
   WiFi.begin(ssid, password);
@@ -99,12 +104,16 @@ void reconnect() {
   while (!client.connected()) {
     if (client.connect(sensor_topic, mqtt_user, mqtt_password)) {
       Serial.println("MQTT connected");
+      telnetClient.println("MQTT connected");
       digitalWrite(2,HIGH);
     } else {
       digitalWrite(2,LOW);
       Serial.print("failed, rc=");
+      telnetClient.print("failed, rc=");
       Serial.print(client.state());
+      telnetClient.print(client.state());
       Serial.println(" try again in 5 seconds");
+      telnetClient.println(" try again in 5 seconds");
       delay(5000);
     }
   }
@@ -112,6 +121,13 @@ void reconnect() {
 
 void loop() {
   ArduinoOTA.handle();
+
+  if (telnetServer.hasClient()) {
+    if (!telnetClient || !telnetClient.connected()) {
+      if (telnetClient) telnetClient.stop();
+      telnetClient = telnetServer.available();
+    }
+  }
 
 }
 
@@ -388,20 +404,26 @@ void modbusTask(void* parameter) {
 
   if (client.publish(sensor_topic, jsonString1)) {
     Serial.println("Message1 sent to MQTT successfully");
+    telnetClient.println("Message1 sent to MQTT successfully");
   } else {
     Serial.println("Failed to publish message to MQTT");
+    telnetClient.println("Failed to publish message to MQTT");
   }
 
   if (client.publish(sensor_topic, jsonString2)) {
     Serial.println("Message2 sent to MQTT successfully");
+    telnetClient.println("Message2 sent to MQTT successfully");
   } else {
     Serial.println("Failed to publish message to MQTT");
+    telnetClient.println("Failed to publish message to MQTT");
   }
 
   if (client.publish(sensor_topic, jsonString3)) {
-    Serial.println("Message2 sent to MQTT successfully");
+    Serial.println("Message3 sent to MQTT successfully");
+    telnetClient.println("Message3 sent to MQTT successfully");
   } else {
     Serial.println("Failed to publish message to MQTT");
+    telnetClient.println("Failed to publish message to MQTT");
   }
 
   Serial.print("MQTT Connection State: ");
@@ -415,12 +437,16 @@ void modbusTask(void* parameter) {
   Serial.println("JSON content: " + String(jsonString1));
   Serial.println("JSON content: " + String(jsonString2));
   Serial.println("JSON content: " + String(jsonString3));
+  telnetClient.println("JSON content: " + String(jsonString1));
+  telnetClient.println("JSON content: " + String(jsonString2));
+  telnetClient.println("JSON content: " + String(jsonString3));
   // Check available stack space
   Serial.println("Available stack space: " + String(uxTaskGetStackHighWaterMark(NULL)));
 
   //------------------------------------------------------------------------------------------
 
   Serial.println("---------------------------------------");
+  telnetClient.println("---------------------------------------");
   delay(1000);
   
   }
