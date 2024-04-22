@@ -2,7 +2,10 @@
 #include <PubSubClient.h>
 #include <ModbusRTUMaster.h>
 #include <ArduinoJson.h>
-//#include "OTA.h"
+#include <ESPmDNS.h>
+#include <WiFiUdp.h>
+#include <ArduinoOTA.h>
+#include "wifi_credentials.h"
 
 // Replace with your WiFi credentials
 const char* ssid = "ENG";
@@ -15,7 +18,7 @@ const char* mqtt_user = "sandun";
 const char* mqtt_password = "Sandun2000";
 
 // Replace with your sensor topic
-const char* sensor_topic = "54K-1";
+const char* sensor_topic = "EX-02";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -52,9 +55,13 @@ void setup() {
   Serial.begin(115200); // For debugging
   modbus.begin(9600, SERIAL_8N1, rxPin, txPin);
   pinMode(2,OUTPUT);
-  //ArduinoOTA.setHostname("54-K_ESP32");
-  //setupOTA();
 
+  //OTA Settings
+  //ArduinoOTA.setHostname("Sandun");
+  //ArduinoOTA.setPassword("IOT@mpl");
+  setupOTA(sensor_topic);
+
+  /*
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -62,11 +69,10 @@ void setup() {
   }
   Serial.println("");
   Serial.println("WiFi connected");
+  */
 
   client.setServer(mqtt_server, mqtt_port);
   client.setCallback(callback); // Optional for receiving messages
-
-  //interruptQueue = xQueueCreate(1, sizeof(int)); // Create a queue for interrupt counts, with a capacity of 1 integer
 
   xTaskCreatePinnedToCore(
     modbusTask,        // Function to run on core 0
@@ -105,7 +111,7 @@ void reconnect() {
 }
 
 void loop() {
-  //ArduinoOTA.handle();
+  ArduinoOTA.handle();
 
 }
 
@@ -487,6 +493,56 @@ float hexToFloat(String hexString) {
   float result;
   memcpy(&result, &hexInt, sizeof(result)); // Copy the raw bytes into a float variable
   return result;
+}
+
+void setupOTA(const char* Hostname) {
+  Serial.begin(115200);
+  Serial.println("Booting");
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+  while (WiFi.waitForConnectResult() != WL_CONNECTED) {
+    Serial.println("Connection Failed! Rebooting...");
+    delay(5000);
+    ESP.restart();
+  }
+
+  // Hostname defaults to esp32-[MAC]
+  ArduinoOTA.setHostname(Hostname);
+
+  // No authentication by default
+  ArduinoOTA.setPassword("IOT@mpl");
+  
+  ArduinoOTA
+    .onStart([]() {
+      String type;
+      if (ArduinoOTA.getCommand() == U_FLASH)
+        type = "sketch";
+      else // U_SPIFFS
+        type = "filesystem";
+
+      // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
+      Serial.println("Start updating " + type);
+    })
+    .onEnd([]() {
+      Serial.println("\nEnd");
+    })
+    .onProgress([](unsigned int progress, unsigned int total) {
+      Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+    })
+    .onError([](ota_error_t error) {
+      Serial.printf("Error[%u]: ", error);
+      if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+      else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+      else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+      else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+      else if (error == OTA_END_ERROR) Serial.println("End Failed");
+    });
+
+  ArduinoOTA.begin();
+
+  Serial.println("Ready");
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
 }
 
 // Optional callback function for receiving MQTT messages
