@@ -22,7 +22,7 @@ const char* mqtt_user = "sandun";
 const char* mqtt_password = "Sandun2000";
 
 // Replace with your sensor topic
-const char* sensor_topic = "EX-02";
+const char* sensor_topic = "54K-1";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -39,6 +39,7 @@ uint32_t total,x;
 int dataAddress;
 uint16_t UrAt,IrAt;
 float floatResult;
+int count_for_reboot = 0;
 
 // Proximity sensor settings
 const int sensorPin = 5; // Pin connected to the proximity sensor
@@ -105,6 +106,7 @@ void reconnect() {
     if (client.connect(sensor_topic, mqtt_user, mqtt_password)) {
       Serial.println("MQTT connected");
       telnetClient.println("MQTT connected");
+      count_for_reboot = 0;
       digitalWrite(2,HIGH);
     } else {
       digitalWrite(2,LOW);
@@ -114,6 +116,12 @@ void reconnect() {
       telnetClient.print(client.state());
       Serial.println(" try again in 5 seconds");
       telnetClient.println(" try again in 5 seconds");
+      count_for_reboot += 1;
+      //telnetClient.println(count_for_reboot);
+      if(count_for_reboot > 2){
+        telnetClient.println("Rebooting...");
+        ESP.restart();
+      }
       delay(5000);
     }
   }
@@ -424,13 +432,25 @@ void modbusTask(void* parameter) {
   } else {
     Serial.println("Failed to publish message to MQTT");
     telnetClient.println("Failed to publish message to MQTT");
+
+    count_for_reboot += 1;
+    //telnetClient.println(count_for_reboot);
+    if(count_for_reboot > 5){
+      telnetClient.println("Rebooting...");
+      ESP.restart();
+    }
+
   }
 
   Serial.print("MQTT Connection State: ");
+  telnetClient.println("MQTT Connection State: ");
   Serial.println(client.state());
+  telnetClient.println(client.state());
 
   Serial.print("Wi-Fi Status: ");
+  telnetClient.println("Wi-Fi Status: ");
   Serial.println(WiFi.status());
+  telnetClient.println(WiFi.status());
 
   //client.publish(sensor_topic, jsonString, true);  // Set retained flag to true
 
