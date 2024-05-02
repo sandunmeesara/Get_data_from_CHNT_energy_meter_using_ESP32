@@ -5,15 +5,10 @@
 #include <ESPmDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
-#include "wifi_credentials.h"
 
 // Replace with your WiFi credentials
 const char* ssid = "ENG";
 const char* password = "123456789#";
-
-//Telnet server object
-WiFiServer telnetServer(23);
-WiFiClient telnetClient;
 
 // Replace with your MQTT broker details
 const char* mqtt_server = "192.168.1.50";
@@ -24,16 +19,20 @@ const char* mqtt_password = "Sandun2000";
 // Replace with your sensor topic
 const char* sensor_topic = "54K-1";
 
+//Object creation
+WiFiServer telnetServer(23);
+WiFiClient telnetClient;
 WiFiClient espClient;
 PubSubClient client(espClient);
+ModbusRTUMaster modbus(Serial2, dePin); // serial Serial interface, driver enable pin for rs-485 (optional)
 
-//pin define for max 485 module
+//Pin define for max 485 module
 const int8_t rxPin = 16;
 const int8_t txPin = 17;
 const uint8_t dePin = 4;
 
-ModbusRTUMaster modbus(Serial2, dePin); // serial Serial interface, driver enable pin for rs-485 (optional)
 
+//Variables and Constants for Modbus communication
 uint16_t holdingRegisters[2];
 uint32_t total,x;
 int dataAddress;
@@ -41,7 +40,7 @@ uint16_t UrAt,IrAt;
 float floatResult;
 int count_for_reboot = 0;
 
-// Proximity sensor settings
+//Variables and Constants for Sensor
 const int sensorPin = 5; // Pin connected to the proximity sensor
 int interruptCounter = 0;
 volatile unsigned long previousMillis = 0;
@@ -61,9 +60,7 @@ void setup() {
   modbus.begin(9600, SERIAL_8N1, rxPin, txPin);
   pinMode(2,OUTPUT);
 
-  //OTA Settings
-  //ArduinoOTA.setHostname("Sandun");
-  //ArduinoOTA.setPassword("IOT@mpl");
+  
   setupOTA(sensor_topic);
   telnetServer.begin();
 
