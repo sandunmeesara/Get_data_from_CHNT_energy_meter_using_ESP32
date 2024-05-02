@@ -13,11 +13,16 @@ const char* password = "123456789#";
 // Replace with your MQTT broker details
 const char* mqtt_server = "192.168.1.50";
 const int mqtt_port = 1883; // Default MQTT port
-const char* mqtt_user = "sandun";
-const char* mqtt_password = "Sandun2000";
+const char* mqtt_user = "Mosq_Admin";
+const char* mqtt_password = "iot@MPLmqtt24";
 
 // Replace with your sensor topic
-const char* sensor_topic = "54K-1";
+const char* sensor_topic = "EX-02";
+
+//Pin define for max 485 module
+const int8_t rxPin = 16;
+const int8_t txPin = 17;
+const uint8_t dePin = 4;
 
 //Object creation
 WiFiServer telnetServer(23);
@@ -25,12 +30,6 @@ WiFiClient telnetClient;
 WiFiClient espClient;
 PubSubClient client(espClient);
 ModbusRTUMaster modbus(Serial2, dePin); // serial Serial interface, driver enable pin for rs-485 (optional)
-
-//Pin define for max 485 module
-const int8_t rxPin = 16;
-const int8_t txPin = 17;
-const uint8_t dePin = 4;
-
 
 //Variables and Constants for Modbus communication
 uint16_t holdingRegisters[2];
@@ -56,26 +55,14 @@ void IRAM_ATTR handleInterrupt();
 
 void setup() {
 
-  Serial.begin(115200); // For debugging
+  pinMode(2,OUTPUT); // Onboard Blue LED for MQTT connected indication
+  Serial.begin(115200); // For debugging purposes
+  SetupOTA(sensor_topic,"IOT@mpl");//Replace this password with your OTA password
+  telnetServer.begin(); // For remote debugging purposes
   modbus.begin(9600, SERIAL_8N1, rxPin, txPin);
-  pinMode(2,OUTPUT);
-
-  
-  setupOTA(sensor_topic);
-  telnetServer.begin();
-
-  /*
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("");
-  Serial.println("WiFi connected");
-  */
-
   client.setServer(mqtt_server, mqtt_port);
-  client.setCallback(callback); // Optional for receiving messages
+  
+  //Tasks Section
 
   xTaskCreatePinnedToCore(
     modbusTask,        // Function to run on core 0
@@ -97,7 +84,9 @@ void setup() {
 
 }
 
-void reconnect() {
+// Local Functions for Tasks
+
+void Reconnect() {
 
   while (!client.connected()) {
     if (client.connect(sensor_topic, mqtt_user, mqtt_password)) {
@@ -111,42 +100,142 @@ void reconnect() {
       telnetClient.print("failed, rc=");
       Serial.print(client.state());
       telnetClient.print(client.state());
-      Serial.println(" try again in 5 seconds");
-      telnetClient.println(" try again in 5 seconds");
+      Serial.println(" try again in 1 seconds");
+      telnetClient.println(" try again in 1 seconds");
+
       count_for_reboot += 1;
-      //telnetClient.println(count_for_reboot);
       if(count_for_reboot > 2){
         telnetClient.println("Rebooting...");
         ESP.restart();
       }
-      delay(5000);
+      vTaskDelay(pdMS_TO_TICKS(1000));
     }
   }
 }
 
-void loop() {
-  ArduinoOTA.handle();
+void IRAM_ATTR handleInterrupt() {
+  
+  unsigned long currentMillis = millis(); // Get the current time
 
-  if (telnetServer.hasClient()) {
-    if (!telnetClient || !telnetClient.connected()) {
-      if (telnetClient) telnetClient.stop();
-      telnetClient = telnetServer.available();
-    }
+  if (firstInterrupt) {
+    previousMillis = currentMillis; // Save the time of the first interrupt
+    firstInterrupt = false;
+  } else {
+    elapsedTime = (currentMillis - previousMillis); // Calculate the time difference between interrupts
+    elapsedTimef = elapsedTime/1000;
+    previousMillis = currentMillis; // Save the time of the second interrupt for the next calculation
+    Serial.println(elapsedTimef);
   }
 
 }
+
+uint16_t readIntData(int dataAddress){
+  modbus.readHoldingRegisters(1, dataAddress, holdingRegisters,1);
+  x = holdingRegisters[0];
+  return x;
+}
+
+float readFloatData(int dataAddress){
+
+  modbus.readHoldingRegisters(1, dataAddress, holdingRegisters,2);
+  total = ((uint32_t)holdingRegisters[0]<<16) | holdingRegisters[1];
+  String hexString = String(total, HEX);
+  float floatResult = hexToFloat(hexString);
+  return floatResult;
+}
+
+String decimalToHex(String decimalString) {
+  long decimalValue = atol(decimalString.c_str()); // Convert decimal string to long
+  char hexBuffer[9]; // Buffer for storing hexadecimal representation (8 characters + null terminator)
+  snprintf(hexBuffer, sizeof(hexBuffer), "%08lX", decimalValue); // Convert long to hexadecimal string
+  return String(hexBuffer);
+}
+
+bool isValidHex(String hexString) {
+  for (char c : hexString) {
+    if (!isHexadecimalDigit(c)) {
+      return false;
+    }
+  }
+  return hexString.length() > 0;
+}
+
+bool isHexadecimalDigit(char c) {
+  return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
+}
+
+float hexToFloat(String hexString) {
+  unsigned long hexInt = strtoul(hexString.c_str(), NULL, 16); // Convert hexadecimal string to unsigned long
+  float result;
+  memcpy(&result, &hexInt, sizeof(result)); // Copy the raw bytes into a float variable
+  return result;
+}
+
+void SetupOTA(const char* OTA_Hostname,const char* OTA_Password) {
+
+  Serial.println("MPL-Sensor-Node is Booting...");
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+  while (WiFi.waitForConnectResult() != WL_CONNECTED) {
+    Serial.println("Connection Failed! Rebooting...");
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    ESP.restart();
+  }
+
+  // Hostname defaults to esp32-[MAC]
+  ArduinoOTA.setHostname(OTA_Hostname);
+
+  // No authentication by default
+  ArduinoOTA.setPassword(OTA_Password);
+  
+  ArduinoOTA
+    .onStart([]() {
+      String type;
+      if (ArduinoOTA.getCommand() == U_FLASH)
+        type = "sketch";
+      else // U_SPIFFS
+        type = "filesystem";
+
+      // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
+      Serial.println("Start updating " + type);
+    })
+    .onEnd([]() {
+      Serial.println("\nEnd");
+    })
+    .onProgress([](unsigned int progress, unsigned int total) {
+      Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+    })
+    .onError([](ota_error_t error) {
+      Serial.printf("Error[%u]: ", error);
+      if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+      else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+      else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+      else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+      else if (error == OTA_END_ERROR) Serial.println("End Failed");
+    });
+
+  ArduinoOTA.begin();
+
+  Serial.println("Ready");
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
+}
+
+
+// Task Functions
 
 void modbusTask(void* parameter) {
 
   //Establishing MQTT Connection
   if (!client.connected()) {
-    reconnect();
+    Reconnect();
   }
   client.loop();
 
-  // Your Modbus and MQTT code here
+
   for (;;) {
-    // Create a JSON objects for each data categories
+
+  // Create a JSON objects for each data categories
   StaticJsonDocument<200> jsonDoc1;
   //JsonObject Energy_Meter_Data = jsonDoc1.createNestedObject("Energy_Meter_Data");
   //JsonObject Voltage_Data = jsonDoc1.createNestedObject("Voltage_Data");
@@ -158,7 +247,6 @@ void modbusTask(void* parameter) {
   StaticJsonDocument<200> jsonDoc3;
   //JsonObject Power_Secondary_Data = jsonDoc3.createNestedObject("Power_Secondary_Data");
 
-  
   //print Software version
   dataAddress = 0x00;
   Serial.println("Software version : " + String(readIntData(dataAddress)));
@@ -393,18 +481,20 @@ void modbusTask(void* parameter) {
   serializeJson(jsonDoc3, jsonString3);
 
   // Publish the JSON string to a MQTT topic
-  client.publish(sensor_topic, jsonString1);
-  delay(350);
-  client.publish(sensor_topic, jsonString2);
-  delay(350);
-  client.publish(sensor_topic, jsonString3);
-  delay(350);
   
+  client.publish(sensor_topic, jsonString1,true);
+  vTaskDelay(pdMS_TO_TICKS(350));
+  client.publish(sensor_topic, jsonString2,true);
+  vTaskDelay(pdMS_TO_TICKS(350));
+  client.publish(sensor_topic, jsonString3,true);
+  vTaskDelay(pdMS_TO_TICKS(350));
+  
+  //client.publish(sensor_topic, jsonString, true);  // Set retained flag to true
   Serial.println("Message sent to MQTT");
   
   //------------------------------------------------------------------------------------------
 
-  //for debugging
+  //For Debugging
   Serial.println("--------Debugging-----------");
 
   if (client.publish(sensor_topic, jsonString1)) {
@@ -431,8 +521,7 @@ void modbusTask(void* parameter) {
     telnetClient.println("Failed to publish message to MQTT");
 
     count_for_reboot += 1;
-    //telnetClient.println(count_for_reboot);
-    if(count_for_reboot > 5){
+    if(count_for_reboot > 2){
       telnetClient.println("Rebooting...");
       ESP.restart();
     }
@@ -449,152 +538,43 @@ void modbusTask(void* parameter) {
   Serial.println(WiFi.status());
   telnetClient.println(WiFi.status());
 
-  //client.publish(sensor_topic, jsonString, true);  // Set retained flag to true
-
   Serial.println("JSON content: " + String(jsonString1));
   Serial.println("JSON content: " + String(jsonString2));
   Serial.println("JSON content: " + String(jsonString3));
   telnetClient.println("JSON content: " + String(jsonString1));
   telnetClient.println("JSON content: " + String(jsonString2));
   telnetClient.println("JSON content: " + String(jsonString3));
+
   // Check available stack space
   Serial.println("Available stack space: " + String(uxTaskGetStackHighWaterMark(NULL)));
 
-  //------------------------------------------------------------------------------------------
-
   Serial.println("---------------------------------------");
   telnetClient.println("---------------------------------------");
-  delay(1000);
+  vTaskDelay(pdMS_TO_TICKS(1000));
   
   }
 }
 
-void IRAM_ATTR handleInterrupt() {
-  //interruptCounter++; // Increment the counter on each interrupt
-  unsigned long currentMillis = millis(); // Get the current time
-
-  if (firstInterrupt) {
-    previousMillis = currentMillis; // Save the time of the first interrupt
-    firstInterrupt = false;
-  } else {
-    elapsedTime = (currentMillis - previousMillis); // Calculate the time difference between interrupts
-    //Serial.println(elapsedTime);
-    elapsedTimef = elapsedTime/1000;
-    Serial.println(elapsedTimef);
-    previousMillis = currentMillis; // Save the time of the second interrupt for the next calculation
-  }
-}
 
 void interruptTask(void* parameter) {
+  
   pinMode(sensorPin, INPUT_PULLUP); // Set the sensor pin as input with internal pull-up resistor
   attachInterrupt(digitalPinToInterrupt(sensorPin), handleInterrupt, RISING); // Attach interrupt to the sensor pin
 
-  //int receivedCount = 0;
   for (;;) {
-    //Serial.println(interruptCounter);
-    vTaskDelay(pdMS_TO_TICKS(1000)); // Delay for 1000 milliseconds
-  }
-}
-
-uint16_t readIntData(int dataAddress){
-  modbus.readHoldingRegisters(1, dataAddress, holdingRegisters,1);
-  x = holdingRegisters[0];
-  return x;
-}
-
-float readFloatData(int dataAddress){
-
-  modbus.readHoldingRegisters(1, dataAddress, holdingRegisters,2);
-  total = ((uint32_t)holdingRegisters[0]<<16) | holdingRegisters[1];
-  String hexString = String(total, HEX);
-  float floatResult = hexToFloat(hexString);
-  return floatResult;
-}
-
-String decimalToHex(String decimalString) {
-  long decimalValue = atol(decimalString.c_str()); // Convert decimal string to long
-  char hexBuffer[9]; // Buffer for storing hexadecimal representation (8 characters + null terminator)
-  snprintf(hexBuffer, sizeof(hexBuffer), "%08lX", decimalValue); // Convert long to hexadecimal string
-  return String(hexBuffer);
-}
-
-bool isValidHex(String hexString) {
-  for (char c : hexString) {
-    if (!isHexadecimalDigit(c)) {
-      return false;
+    //Establishing Telnet Server
+    if (telnetServer.hasClient()) {
+      if (!telnetClient || !telnetClient.connected()) {
+        if (telnetClient) telnetClient.stop();
+        telnetClient = telnetServer.available();
+      }
     }
-  }
-  return hexString.length() > 0;
-}
 
-bool isHexadecimalDigit(char c) {
-  return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
-}
-
-float hexToFloat(String hexString) {
-  unsigned long hexInt = strtoul(hexString.c_str(), NULL, 16); // Convert hexadecimal string to unsigned long
-  float result;
-  memcpy(&result, &hexInt, sizeof(result)); // Copy the raw bytes into a float variable
-  return result;
-}
-
-void setupOTA(const char* Hostname) {
-  Serial.begin(115200);
-  Serial.println("Booting");
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
-  while (WiFi.waitForConnectResult() != WL_CONNECTED) {
-    Serial.println("Connection Failed! Rebooting...");
-    delay(5000);
-    ESP.restart();
+    vTaskDelay(pdMS_TO_TICKS(250)); // Delay for 100 milliseconds
   }
 
-  // Hostname defaults to esp32-[MAC]
-  ArduinoOTA.setHostname(Hostname);
+}
 
-  // No authentication by default
-  ArduinoOTA.setPassword("IOT@mpl");
+void loop() {
   
-  ArduinoOTA
-    .onStart([]() {
-      String type;
-      if (ArduinoOTA.getCommand() == U_FLASH)
-        type = "sketch";
-      else // U_SPIFFS
-        type = "filesystem";
-
-      // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
-      Serial.println("Start updating " + type);
-    })
-    .onEnd([]() {
-      Serial.println("\nEnd");
-    })
-    .onProgress([](unsigned int progress, unsigned int total) {
-      Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-    })
-    .onError([](ota_error_t error) {
-      Serial.printf("Error[%u]: ", error);
-      if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
-      else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
-      else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
-      else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-      else if (error == OTA_END_ERROR) Serial.println("End Failed");
-    });
-
-  ArduinoOTA.begin();
-
-  Serial.println("Ready");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
-}
-
-// Optional callback function for receiving MQTT messages
-void callback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("Message arrived [");
-  Serial.print(topic);
-  Serial.print("] ");
-  for (int i = 0; i < length; i++) {
-    Serial.print((char)payload[i]);
-  }
-  Serial.println();
 }
