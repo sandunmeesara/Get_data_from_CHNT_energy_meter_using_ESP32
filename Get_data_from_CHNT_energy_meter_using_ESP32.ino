@@ -5,7 +5,6 @@
 #include <ESPmDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
-#include "wifi_credentials.h"
 
 // Replace with your WiFi credentials
 const char* ssid = "ENG";
@@ -43,10 +42,10 @@ int count_for_reboot = 0;
 
 // Proximity sensor settings
 const int sensorPin = 5; // Pin connected to the proximity sensor
-int interruptCounter = 0;
 volatile unsigned long previousMillis = 0;
 volatile unsigned long elapsedTime = 0;
-float elapsedTimef = 0;
+//int rpm = 0;
+int interruptCounter = 0;
 volatile bool firstInterrupt = true;
 
 // Function prototypes
@@ -383,7 +382,7 @@ void modbusTask(void* parameter) {
   jsonDoc3["4Q"] = floatResult;
 
   //Serial.println(interruptCounter);
-  jsonDoc3["Cycle_time(s)"] = elapsedTimef;  
+  jsonDoc3["Cycle_time(s)"] = interruptCounter;
 
   // Serialize the JSON objects to a strings
   char jsonString1[200];
@@ -473,7 +472,7 @@ void modbusTask(void* parameter) {
 }
 
 void IRAM_ATTR handleInterrupt() {
-  interruptCounter++; // Increment the counter on each interrupt
+  interruptCounter += 1; // Increment the counter on each interrupt
 
 }
 
@@ -491,9 +490,16 @@ void interruptTask(void* parameter) {
     } else {
       elapsedTime = (currentMillis - previousMillis); // Calculate the time difference between interrupts
       if(elapsedTime==60000){
-          elapsedTimef = interruptCounter/60000;//no of cycles per minute
+          //rpm = interruptCounter;//no of cycles per minute
+          //Serial.println("RPM :");
+          //Serial.print(rpm);
+          //Serial.print(" ---------------------------------------");
+          //Serial.println("Interrupt count:");
+          //Serial.print(interruptCounter);
+         // Serial.println("Cycle time updated!-----------------------------------");
           interruptCounter = 0;
           previousMillis = currentMillis; // Save the time of the second interrupt for the next calculation
+          
       }
     }
 
