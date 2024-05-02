@@ -18,8 +18,8 @@ WiFiClient telnetClient;
 // Replace with your MQTT broker details
 const char* mqtt_server = "192.168.1.50";
 const int mqtt_port = 1883; // Default MQTT port
-const char* mqtt_user = "sandun";
-const char* mqtt_password = "Sandun2000";
+const char* mqtt_user = "Mosq_Admin";
+const char* mqtt_password = "iot@MPLmqtt24";
 
 // Replace with your sensor topic
 const char* sensor_topic = "54K-1";
@@ -46,7 +46,7 @@ const int sensorPin = 5; // Pin connected to the proximity sensor
 int interruptCounter = 0;
 volatile unsigned long previousMillis = 0;
 volatile unsigned long elapsedTime = 0;
-float elapsedTimef = 0.0;
+float elapsedTimef = 0;
 volatile bool firstInterrupt = true;
 
 // Function prototypes
@@ -473,29 +473,31 @@ void modbusTask(void* parameter) {
 }
 
 void IRAM_ATTR handleInterrupt() {
-  //interruptCounter++; // Increment the counter on each interrupt
-  unsigned long currentMillis = millis(); // Get the current time
+  interruptCounter++; // Increment the counter on each interrupt
 
-  if (firstInterrupt) {
-    previousMillis = currentMillis; // Save the time of the first interrupt
-    firstInterrupt = false;
-  } else {
-    elapsedTime = (currentMillis - previousMillis); // Calculate the time difference between interrupts
-    //Serial.println(elapsedTime);
-    elapsedTimef = elapsedTime/1000;
-    Serial.println(elapsedTimef);
-    previousMillis = currentMillis; // Save the time of the second interrupt for the next calculation
-  }
 }
 
 void interruptTask(void* parameter) {
   pinMode(sensorPin, INPUT_PULLUP); // Set the sensor pin as input with internal pull-up resistor
   attachInterrupt(digitalPinToInterrupt(sensorPin), handleInterrupt, RISING); // Attach interrupt to the sensor pin
 
-  //int receivedCount = 0;
   for (;;) {
-    //Serial.println(interruptCounter);
-    vTaskDelay(pdMS_TO_TICKS(1000)); // Delay for 1000 milliseconds
+
+    unsigned long currentMillis = millis(); // Get the current time
+
+    if (firstInterrupt) {
+      previousMillis = currentMillis; // Save the time of the first interrupt
+      firstInterrupt = false;
+    } else {
+      elapsedTime = (currentMillis - previousMillis); // Calculate the time difference between interrupts
+      if(elapsedTime==60000){
+          elapsedTimef = interruptCounter/60000;//no of cycles per minute
+          interruptCounter = 0;
+          previousMillis = currentMillis; // Save the time of the second interrupt for the next calculation
+      }
+    }
+
+    //vTaskDelay(pdMS_TO_TICKS(1000)); // Delay for 1000 milliseconds
   }
 }
 
