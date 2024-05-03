@@ -44,7 +44,7 @@ int count_for_reboot = 0;
 const int sensorPin = 5; // Pin connected to the proximity sensor
 volatile unsigned long previousMillis = 0;
 volatile unsigned long elapsedTime = 0;
-//int rpm = 0;
+int rpm = 0;
 int interruptCounter = 0;
 volatile bool firstInterrupt = true;
 
@@ -382,7 +382,7 @@ void modbusTask(void* parameter) {
   jsonDoc3["4Q"] = floatResult;
 
   //Serial.println(interruptCounter);
-  jsonDoc3["Cycle_time(s)"] = interruptCounter;
+  jsonDoc3["Cycle_time(s)"] = rpm;
 
   // Serialize the JSON objects to a strings
   char jsonString1[200];
@@ -490,7 +490,7 @@ void interruptTask(void* parameter) {
     } else {
       elapsedTime = (currentMillis - previousMillis); // Calculate the time difference between interrupts
       if(elapsedTime==60000){
-          //rpm = interruptCounter;//no of cycles per minute
+          rpm = interruptCounter;//no of cycles per minute
           //Serial.println("RPM :");
           //Serial.print(rpm);
           //Serial.print(" ---------------------------------------");
