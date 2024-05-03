@@ -41,17 +41,16 @@ int count_for_reboot = 0;
 
 //Variables and Constants for Sensor
 const int sensorPin = 5; // Pin connected to the proximity sensor
-int interruptCounter = 0;
 volatile unsigned long previousMillis = 0;
 volatile unsigned long elapsedTime = 0;
-float elapsedTimef = 0.0;
+int rpm = 0;
+int interruptCounter = 0;
 volatile bool firstInterrupt = true;
 
 // Function prototypes
 void modbusTask(void* parameter);
 void interruptTask(void* parameter);
 void IRAM_ATTR handleInterrupt();
-
 
 void setup() {
 
@@ -114,18 +113,8 @@ void Reconnect() {
 }
 
 void IRAM_ATTR handleInterrupt() {
-  
-  unsigned long currentMillis = millis(); // Get the current time
-
-  if (firstInterrupt) {
-    previousMillis = currentMillis; // Save the time of the first interrupt
-    firstInterrupt = false;
-  } else {
-    elapsedTime = (currentMillis - previousMillis); // Calculate the time difference between interrupts
-    elapsedTimef = elapsedTime/1000;
-    previousMillis = currentMillis; // Save the time of the second interrupt for the next calculation
-    Serial.println(elapsedTimef);
-  }
+  //increament counter
+  interruptCounter += 1;
 
 }
 
@@ -234,6 +223,8 @@ void modbusTask(void* parameter) {
 
 
   for (;;) {
+
+  ArduinoOTA.handle();
 
   // Create a JSON objects for each data categories
   StaticJsonDocument<200> jsonDoc1;
@@ -468,7 +459,7 @@ void modbusTask(void* parameter) {
   jsonDoc3["4Q"] = floatResult;
 
   //Serial.println(interruptCounter);
-  jsonDoc3["Cycle_time(s)"] = elapsedTimef;  
+  jsonDoc3["Cycle_time(s)"] = rpm;  
 
   // Serialize the JSON objects to a strings
   char jsonString1[200];
@@ -570,7 +561,20 @@ void interruptTask(void* parameter) {
       }
     }
 
-    vTaskDelay(pdMS_TO_TICKS(250)); // Delay for 100 milliseconds
+    unsigned long currentMillis = millis(); // Get the current time
+
+    if (firstInterrupt) {
+      previousMillis = currentMillis; // Save the time of the first interrupt
+      firstInterrupt = false;
+    } else {
+      elapsedTime = (currentMillis - previousMillis); // Calculate the time difference between interrupts
+      if(elapsedTime==60000){
+          rpm = interruptCounter;//no of cycles per minute
+          interruptCounter = 0;
+          previousMillis = currentMillis; // Save the time of the second interrupt for the next calculation
+      }
+    }
+
   }
 
 }
