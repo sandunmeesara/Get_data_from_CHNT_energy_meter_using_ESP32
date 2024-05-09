@@ -17,7 +17,7 @@ const char* mqtt_user = "Mosq_Admin";
 const char* mqtt_password = "iot@MPLmqtt24";
 
 // Replace with your sensor topic
-const char* sensor_topic = "EX-02";
+const char* sensor_topic = "54K-1";
 
 //Pin define for max 485 module
 const int8_t rxPin = 16;
@@ -43,6 +43,8 @@ int count_for_reboot = 0;
 const int sensorPin = 5; // Pin connected to the proximity sensor
 volatile unsigned long previousMillis = 0;
 volatile unsigned long elapsedTime = 0;
+volatile unsigned long int_previousMillis = 0;
+volatile float int_elapsedTime = 0;
 int rpm = 0;
 int interruptCounter = 0;
 volatile bool firstInterrupt = true;
@@ -115,6 +117,15 @@ void Reconnect() {
 void IRAM_ATTR handleInterrupt() {
   //increament counter
   interruptCounter += 1;
+  unsigned long int_currentMillis = millis(); // Get the current time
+
+  if (firstInterrupt) {
+    int_previousMillis = int_currentMillis; // Save the time of the first interrupt
+    firstInterrupt = false;
+  } else {
+    int_elapsedTime = (int_currentMillis - int_previousMillis)/1000.00; // Calculate the time difference between interrupts
+    int_previousMillis = int_currentMillis; // Save the time of the second interrupt for the next calculation
+  }
 
 }
 
@@ -459,7 +470,10 @@ void modbusTask(void* parameter) {
   jsonDoc3["4Q"] = floatResult;
 
   //Serial.println(interruptCounter);
-  jsonDoc3["Cycle_time(s)"] = rpm;  
+  jsonDoc3["Cycle_time(s)"] = int_elapsedTime;  
+
+  //Serial.println(interruptCounter);
+  jsonDoc3["RPM"] = rpm;  
 
   // Serialize the JSON objects to a strings
   char jsonString1[200];
@@ -548,6 +562,9 @@ void modbusTask(void* parameter) {
 
 
 void interruptTask(void* parameter) {
+
+  unsigned long currentMillis = millis(); // Get the current time
+  previousMillis = currentMillis;
   
   pinMode(sensorPin, INPUT_PULLUP); // Set the sensor pin as input with internal pull-up resistor
   attachInterrupt(digitalPinToInterrupt(sensorPin), handleInterrupt, RISING); // Attach interrupt to the sensor pin
@@ -561,18 +578,12 @@ void interruptTask(void* parameter) {
       }
     }
 
-    unsigned long currentMillis = millis(); // Get the current time
-
-    if (firstInterrupt) {
-      previousMillis = currentMillis; // Save the time of the first interrupt
-      firstInterrupt = false;
-    } else {
-      elapsedTime = (currentMillis - previousMillis); // Calculate the time difference between interrupts
-      if(elapsedTime==60000){
+    currentMillis = millis(); // Get the current time
+    elapsedTime = (currentMillis - previousMillis);
+    if(elapsedTime==60000){
           rpm = interruptCounter;//no of cycles per minute
           interruptCounter = 0;
           previousMillis = currentMillis; // Save the time of the second interrupt for the next calculation
-      }
     }
 
   }
