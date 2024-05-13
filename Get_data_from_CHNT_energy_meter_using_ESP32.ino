@@ -45,6 +45,7 @@ volatile unsigned long previousMillis = 0;
 volatile unsigned long elapsedTime = 0;
 volatile unsigned long int_previousMillis = 0;
 volatile float int_elapsedTime = 0;
+unsigned long previousMillis_delay = 0;
 int rpm = 0;
 int interruptCounter = 0;
 volatile bool firstInterrupt = true;
@@ -114,11 +115,18 @@ void Reconnect() {
   }
 }
 
+
 void IRAM_ATTR handleInterrupt() {
   //increament counter
-  interruptCounter += 1;
-  unsigned long int_currentMillis = millis(); // Get the current time
+  //interruptCounter += 1;
+  unsigned long currentMillis_delay = millis(); // Get the current time
+  long x_time = currentMillis_delay - previousMillis_delay;
+  if (x_time > 17) {
+    interruptCounter += 1;
+    previousMillis_delay = currentMillis_delay; // Save the time of the first interrupt
+  }
 
+  unsigned long int_currentMillis = millis(); // Get the current time
   if (firstInterrupt) {
     int_previousMillis = int_currentMillis; // Save the time of the first interrupt
     firstInterrupt = false;
