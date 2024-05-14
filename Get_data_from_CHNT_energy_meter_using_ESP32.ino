@@ -121,7 +121,7 @@ void IRAM_ATTR handleInterrupt() {
   //interruptCounter += 1;
   unsigned long currentMillis_delay = millis(); // Get the current time
   long x_time = currentMillis_delay - previousMillis_delay;
-  if (x_time > 17) {
+  if (x_time > 1800) {
     interruptCounter += 1;
     previousMillis_delay = currentMillis_delay; // Save the time of the first interrupt
   }
@@ -137,15 +137,14 @@ void IRAM_ATTR handleInterrupt() {
 
 }
 
-uint16_t readIntData(int dataAddress){
-  modbus.readHoldingRegisters(1, dataAddress, holdingRegisters,1);
+uint16_t readIntData(int dataAddress,int device_id = 1){
+  modbus.readHoldingRegisters(device_id, dataAddress, holdingRegisters,1);
   x = holdingRegisters[0];
   return x;
 }
 
-float readFloatData(int dataAddress){
-
-  modbus.readHoldingRegisters(1, dataAddress, holdingRegisters,2);
+float readFloatData(int dataAddress,int device_id = 1){
+  modbus.readHoldingRegisters(device_id, dataAddress, holdingRegisters,2);
   total = ((uint32_t)holdingRegisters[0]<<16) | holdingRegisters[1];
   String hexString = String(total, HEX);
   float floatResult = hexToFloat(hexString);
@@ -256,6 +255,32 @@ void modbusTask(void* parameter) {
 
   StaticJsonDocument<200> jsonDoc3;
   //JsonObject Power_Secondary_Data = jsonDoc3.createNestedObject("Power_Secondary_Data");
+  
+  //---------------------------------------------------------------------------------------------------
+  //Get Temperature Data from Temperature Data Aqucision Module
+  StaticJsonDocument<200> jsonDoc4;
+  String doc_name;
+
+  //Get Device 1 Data
+  int deviceID = 2;
+  int doc_count = 1;
+  for(dataAddress = 40001;dataAddress<40009;dataAddress++){
+    Serial.println("Temperature : " + String(readIntData(dataAddress,deviceID)));
+    doc_name = String(deviceID) + "-TDA_Module-Channel-" + String(doc_count);
+    jsonDoc4[doc_name] = readIntData(dataAddress);
+  }
+
+  //Get Device 2 Data
+  deviceID = 3;
+  doc_count = 1;
+  for(dataAddress = 40001;dataAddress<40009;dataAddress++){
+    Serial.println("Temperature : " + String(readIntData(dataAddress,deviceID)));
+    doc_name = String(deviceID) + "-TDA_Module-Channel-" + String(doc_count);
+    jsonDoc4[doc_name] = readIntData(dataAddress);
+  }
+  
+  //---------------------------------------------------------------------------------------------------
+  
 
   //print Software version
   dataAddress = 0x00;
@@ -493,6 +518,10 @@ void modbusTask(void* parameter) {
   char jsonString3[200];
   serializeJson(jsonDoc3, jsonString3);
 
+  //This is for sending temperature data
+  char jsonString4[200];
+  serializeJson(jsonDoc4, jsonString4);
+
   // Publish the JSON string to a MQTT topic
   
   client.publish(sensor_topic, jsonString1,true);
@@ -500,6 +529,8 @@ void modbusTask(void* parameter) {
   client.publish(sensor_topic, jsonString2,true);
   vTaskDelay(pdMS_TO_TICKS(350));
   client.publish(sensor_topic, jsonString3,true);
+  vTaskDelay(pdMS_TO_TICKS(350));
+  client.publish(sensor_topic, jsonString4,true);
   vTaskDelay(pdMS_TO_TICKS(350));
   
   //client.publish(sensor_topic, jsonString, true);  // Set retained flag to true
@@ -532,6 +563,14 @@ void modbusTask(void* parameter) {
   } else {
     Serial.println("Failed to publish message to MQTT");
     telnetClient.println("Failed to publish message to MQTT");
+  }
+
+  if (client.publish(sensor_topic, jsonString4)) {
+    Serial.println("Message4 sent to MQTT successfully");
+    telnetClient.println("Message4 sent to MQTT successfully");
+  } else {
+    Serial.println("Failed to publish message to MQTT");
+    telnetClient.println("Failed to publish message to MQTT");
 
     count_for_reboot += 1;
     if(count_for_reboot > 2){
@@ -554,9 +593,11 @@ void modbusTask(void* parameter) {
   Serial.println("JSON content: " + String(jsonString1));
   Serial.println("JSON content: " + String(jsonString2));
   Serial.println("JSON content: " + String(jsonString3));
+  Serial.println("JSON content: " + String(jsonString4));
   telnetClient.println("JSON content: " + String(jsonString1));
   telnetClient.println("JSON content: " + String(jsonString2));
   telnetClient.println("JSON content: " + String(jsonString3));
+  telnetClient.println("JSON content: " + String(jsonString4));
 
   // Check available stack space
   Serial.println("Available stack space: " + String(uxTaskGetStackHighWaterMark(NULL)));
