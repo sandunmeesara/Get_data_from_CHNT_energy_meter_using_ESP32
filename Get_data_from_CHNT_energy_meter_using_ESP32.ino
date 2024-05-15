@@ -262,19 +262,19 @@ void modbusTask(void* parameter) {
   String doc_name;
 
   //Get Device 1 Data
-  /*
+  
   int deviceID = 2;
   int doc_count = 0;
-  for(dataAddress = 9;dataAddress<17;dataAddress++){
+  for(dataAddress = 8;dataAddress<16;dataAddress++){
     doc_name = String(deviceID) + "-TDA-C-" + String(doc_count);
-    float x = readIntData(dataAddress)/10.0;
+    float x = readIntData(dataAddress,deviceID)/10.0;
     Serial.println(doc_name +":"+ String(x));
     jsonDoc4[doc_name] = x;
     doc_count += 1;
-  }*/
+  }
 
   //Get Device 2 Data
-  
+  /*
   int deviceID = 2;
   int doc_count = 1;
   for(dataAddress = 40009;dataAddress<400014;dataAddress++){
@@ -282,7 +282,7 @@ void modbusTask(void* parameter) {
     Serial.println(doc_name +":"+ String(readIntData(dataAddress,deviceID)));
     jsonDoc4[doc_name] = readIntData(dataAddress);
     doc_count += 1;
-  }
+  }*/
   
   //---------------------------------------------------------------------------------------------------
   
