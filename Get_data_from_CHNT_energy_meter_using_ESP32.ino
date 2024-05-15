@@ -17,7 +17,7 @@ const char* mqtt_user = "Mosq_Admin";
 const char* mqtt_password = "iot@MPLmqtt24";
 
 // Replace with your sensor topic
-const char* sensor_topic = "54K-1";
+const char* sensor_topic = "EX-02";
 
 //Pin define for max 485 module
 const int8_t rxPin = 16;
@@ -262,21 +262,26 @@ void modbusTask(void* parameter) {
   String doc_name;
 
   //Get Device 1 Data
+  /*
   int deviceID = 2;
-  int doc_count = 1;
-  for(dataAddress = 40001;dataAddress<40009;dataAddress++){
-    Serial.println("Temperature : " + String(readIntData(dataAddress,deviceID)));
-    doc_name = String(deviceID) + "-TDA_Module-Channel-" + String(doc_count);
-    jsonDoc4[doc_name] = readIntData(dataAddress);
-  }
+  int doc_count = 0;
+  for(dataAddress = 9;dataAddress<17;dataAddress++){
+    doc_name = String(deviceID) + "-TDA-C-" + String(doc_count);
+    float x = readIntData(dataAddress)/10.0;
+    Serial.println(doc_name +":"+ String(x));
+    jsonDoc4[doc_name] = x;
+    doc_count += 1;
+  }*/
 
   //Get Device 2 Data
-  deviceID = 3;
-  doc_count = 1;
-  for(dataAddress = 40001;dataAddress<40009;dataAddress++){
-    Serial.println("Temperature : " + String(readIntData(dataAddress,deviceID)));
+  
+  int deviceID = 2;
+  int doc_count = 1;
+  for(dataAddress = 40009;dataAddress<400014;dataAddress++){
     doc_name = String(deviceID) + "-TDA_Module-Channel-" + String(doc_count);
+    Serial.println(doc_name +":"+ String(readIntData(dataAddress,deviceID)));
     jsonDoc4[doc_name] = readIntData(dataAddress);
+    doc_count += 1;
   }
   
   //---------------------------------------------------------------------------------------------------
