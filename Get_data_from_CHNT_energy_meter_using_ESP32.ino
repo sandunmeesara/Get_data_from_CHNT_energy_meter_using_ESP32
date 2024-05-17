@@ -266,7 +266,7 @@ void modbusTask(void* parameter) {
   int deviceID = 2;
   int doc_count = 0;
   for(dataAddress = 8;dataAddress<16;dataAddress++){
-    doc_name = String(deviceID) + "-TDA-C-" + String(doc_count);
+    doc_name = "TDA" + String(deviceID) + String(doc_count);
     float x = readIntData(dataAddress,deviceID)/10.0;
     Serial.println(doc_name +":"+ String(x));
     jsonDoc4[doc_name] = x;
