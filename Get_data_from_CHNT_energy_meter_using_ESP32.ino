@@ -245,26 +245,27 @@ void modbusTask(void* parameter) {
   ArduinoOTA.handle();
 
   // Create a JSON objects for each data categories
-  StaticJsonDocument<200> jsonDoc1;
+  //StaticJsonDocument<200> jsonDoc1;
   //JsonObject Energy_Meter_Data = jsonDoc1.createNestedObject("Energy_Meter_Data");
   //JsonObject Voltage_Data = jsonDoc1.createNestedObject("Voltage_Data");
   //JsonObject Current_Data = jsonDoc1.createNestedObject("Current_Data");
 
-  StaticJsonDocument<200> jsonDoc2;
+  //StaticJsonDocument<200> jsonDoc2;
   //JsonObject Power_Data = jsonDoc2.createNestedObject("Power_Data");
 
-  StaticJsonDocument<200> jsonDoc3;
+  //StaticJsonDocument<200> jsonDoc3;
   //JsonObject Power_Secondary_Data = jsonDoc3.createNestedObject("Power_Secondary_Data");
   
   //---------------------------------------------------------------------------------------------------
   //Get Temperature Data from Temperature Data Aqucision Module
   StaticJsonDocument<200> jsonDoc4;
   String doc_name;
+  int deviceID;
+  int doc_count;
 
   //Get Device 1 Data
-  
-  int deviceID = 2;
-  int doc_count = 0;
+  deviceID = 2;
+  doc_count = 0;
   for(dataAddress = 8;dataAddress<16;dataAddress++){
     doc_name = "TDA" + String(deviceID) + String(doc_count);
     float x = readIntData(dataAddress,deviceID)/10.0;
@@ -274,19 +275,19 @@ void modbusTask(void* parameter) {
   }
 
   //Get Device 2 Data
-  /*
-  int deviceID = 2;
-  int doc_count = 1;
-  for(dataAddress = 40009;dataAddress<400014;dataAddress++){
-    doc_name = String(deviceID) + "-TDA_Module-Channel-" + String(doc_count);
-    Serial.println(doc_name +":"+ String(readIntData(dataAddress,deviceID)));
-    jsonDoc4[doc_name] = readIntData(dataAddress);
+  deviceID = 3;
+  doc_count = 0;
+  for(dataAddress = 8;dataAddress<16;dataAddress++){
+    doc_name = "TDA" + String(deviceID) + String(doc_count);
+    float x = readIntData(dataAddress,deviceID)/10.0;
+    Serial.println(doc_name +":"+ String(x));
+    jsonDoc4[doc_name] = x;
     doc_count += 1;
-  }*/
-  
+  }
+
   //---------------------------------------------------------------------------------------------------
   
-
+  /*
   //print Software version
   dataAddress = 0x00;
   Serial.println("Software version : " + String(readIntData(dataAddress)));
@@ -511,7 +512,7 @@ void modbusTask(void* parameter) {
   jsonDoc3["Cycle_time(s)"] = int_elapsedTime;  
 
   //Serial.println(interruptCounter);
-  jsonDoc3["RPM"] = rpm;  
+  jsonDoc3["RPM"] = rpm;  */
 
   // Serialize the JSON objects to a strings
   char jsonString1[200];
@@ -528,13 +529,13 @@ void modbusTask(void* parameter) {
   serializeJson(jsonDoc4, jsonString4);
 
   // Publish the JSON string to a MQTT topic
-  
+  /*
   client.publish(sensor_topic, jsonString1,true);
   vTaskDelay(pdMS_TO_TICKS(350));
   client.publish(sensor_topic, jsonString2,true);
   vTaskDelay(pdMS_TO_TICKS(350));
   client.publish(sensor_topic, jsonString3,true);
-  vTaskDelay(pdMS_TO_TICKS(350));
+  vTaskDelay(pdMS_TO_TICKS(350));*/
   client.publish(sensor_topic, jsonString4,true);
   vTaskDelay(pdMS_TO_TICKS(350));
   
@@ -545,7 +546,7 @@ void modbusTask(void* parameter) {
 
   //For Debugging
   Serial.println("--------Debugging-----------");
-
+  /*
   if (client.publish(sensor_topic, jsonString1)) {
     Serial.println("Message1 sent to MQTT successfully");
     telnetClient.println("Message1 sent to MQTT successfully");
@@ -569,7 +570,7 @@ void modbusTask(void* parameter) {
     Serial.println("Failed to publish message to MQTT");
     telnetClient.println("Failed to publish message to MQTT");
   }
-
+  */
   if (client.publish(sensor_topic, jsonString4)) {
     Serial.println("Message4 sent to MQTT successfully");
     telnetClient.println("Message4 sent to MQTT successfully");
