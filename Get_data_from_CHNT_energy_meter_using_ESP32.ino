@@ -247,33 +247,15 @@ void modbusTask(void* parameter) {
   ArduinoOTA.handle();
 
   // Create a JSON objects for each data categories
-  StaticJsonDocument<200> jsonDoc1;
-  StaticJsonDocument<200> jsonDoc2;
-  StaticJsonDocument<200> jsonDoc3;
-  
+  StaticJsonDocument<350> jsonDoc1;
+
   //print Current Transformer Rate(IrAt)
   dataAddress = 0x06;
   IrAt = readIntData(dataAddress);
-  Serial.println("Current Transformer Rate(IrAt) : " + String(IrAt));
-  jsonDoc1["IrAt"] = IrAt;
-  
-  //print Three Phase line voltage(Uab)
-  dataAddress = 0x2000;
-  floatResult = readFloatData(dataAddress) * 0.1;
-  Serial.println("Uab : " + String(floatResult) + "v");
-  jsonDoc1["Uab"] = floatResult;
 
-  //print Three Phase line voltage(Ubc)
-  dataAddress = 0x2002;
-  floatResult = readFloatData(dataAddress) * 0.1;
-  Serial.println("Ubc : " + String(floatResult) + "v");
-  jsonDoc1["Ubc"] = floatResult;
-
-  //print Three Phase line voltage(Uca)
-  dataAddress = 0x2004;
-  floatResult = readFloatData(dataAddress) * 0.1;
-  Serial.println("Uca : " + String(floatResult) + "v");
-  jsonDoc1["Uca"] = floatResult;
+  //print Voltage Transformer Rate(UrAt)
+  dataAddress = 0x07;
+  UrAt = readIntData(dataAddress);
 
   //print Three Phase Phase voltage(Ua)
   dataAddress = 0x2006;
@@ -315,110 +297,76 @@ void modbusTask(void* parameter) {
   dataAddress = 0x2012;
   floatResult = readFloatData(dataAddress) * IrAt * 0.1;
   Serial.println("Pt : " + String(floatResult) + "W");
-  jsonDoc2["Pt"] = floatResult;
+  jsonDoc1["Pt"] = floatResult;
 
   //print A Phase active power(Pa)
   dataAddress = 0x2014;
   floatResult = readFloatData(dataAddress) * IrAt * 0.1;
   Serial.println("Pa : " + String(floatResult) + "W");
-  jsonDoc2["Pa"] = floatResult;
+  jsonDoc1["Pa"] = floatResult;
 
   //print B Phase active power(Pb)
   dataAddress = 0x2016;
   floatResult = readFloatData(dataAddress) * IrAt * 0.1;
   Serial.println("Pb : " + String(floatResult) + "W");
-  jsonDoc2["Pb"] = floatResult;
+  jsonDoc1["Pb"] = floatResult;
 
   //print C Phase active power(Pc)
   dataAddress = 0x2018;
   floatResult = readFloatData(dataAddress) * IrAt * 0.1;
   Serial.println("Pc : " + String(floatResult) + "W");
-  jsonDoc2["Pc"] = floatResult;
-
-  //print Combined Reactive Power(Qt)
-  dataAddress = 0x201A;
-  floatResult = readFloatData(dataAddress) * IrAt * 0.1;
-  Serial.println("Qt : " + String(floatResult) + "var");
-  jsonDoc2["Qt"] = floatResult;
-
-  //print A Phase Reactive Power(Qa)
-  dataAddress = 0x201C;
-  floatResult = readFloatData(dataAddress) * IrAt * 0.1;
-  Serial.println("Qa : " + String(floatResult) + "var");
-  jsonDoc2["Qa"] = floatResult;
-
-  //print B Phase Reactive Power(Qb)
-  dataAddress = 0x201E;
-  floatResult = readFloatData(dataAddress) * IrAt * 0.1;
-  Serial.println("Qb : " + String(floatResult) + "var");
-  jsonDoc2["Qb"] = floatResult;
-
-  //print C Phase Reactive Power(Qc)
-  dataAddress = 0x2020;
-  floatResult = readFloatData(dataAddress) * IrAt * 0.1;
-  Serial.println("Qc : " + String(floatResult) + "var");
-  jsonDoc2["Qc"] = floatResult;
+  jsonDoc1["Pc"] = floatResult;
 
   //print Combined Power Factor(PFt)
   dataAddress = 0x202A;
   floatResult = readFloatData(dataAddress) * 0.001;
   Serial.println("PFt : " + String(floatResult));
-  jsonDoc2["PFt"] = floatResult;
+  jsonDoc1["PFt"] = floatResult;
 
   //print A Phase Power Factor(PFa)
   dataAddress = 0x202C;
   floatResult = readFloatData(dataAddress) * 0.001;
   Serial.println("PFa : " + String(floatResult));
-  jsonDoc2["PFa"] = floatResult;
+  jsonDoc1["PFa"] = floatResult;
 
   //print B Phase Power Factor(PFb)
   dataAddress = 0x202E;
   floatResult = readFloatData(dataAddress) * 0.001;
   Serial.println("PFb : " + String(floatResult));
-  jsonDoc3["PFb"] = floatResult;
+  jsonDoc1["PFb"] = floatResult;
 
   //print C Phase Power Factor(PFc)
   dataAddress = 0x2030;
   floatResult = readFloatData(dataAddress) * 0.001;
   Serial.println("PFc : " + String(floatResult));
-  jsonDoc3["PFc"] = floatResult;
+  jsonDoc1["PFc"] = floatResult;
 
   //print Frequency
   dataAddress = 0x2044;
   floatResult = readFloatData(dataAddress) * 0.01;
   Serial.println("Frequency : " + String(floatResult) + "Hz");
-  jsonDoc3["Freq"] = floatResult;
+  jsonDoc1["Freq"] = floatResult;
 
   //print Forward Total Active Energy - ImpEp
   dataAddress = 0x101E;
   floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt;
   Serial.println("Forward total active energy(ImpEp)  : " + String(floatResult) + "kWh");
-  jsonDoc3["ImpEp"] = floatResult;
+  jsonDoc1["ImpEp"] = floatResult;
 
   //Serial.println(interruptCounter);
-  jsonDoc3["Cycle_time(s)"] = int_elapsedTime;  
+  jsonDoc1["Cycle_time(s)"] = int_elapsedTime;  
 
   //Serial.println(interruptCounter);
-  jsonDoc3["RPM"] = rpm;  
+  jsonDoc1["RPM"] = rpm;  
 
   // Serialize the JSON objects to a strings
-  char jsonString1[200];
+  char jsonString1[350];
   serializeJson(jsonDoc1, jsonString1);
-
-  char jsonString2[200];
-  serializeJson(jsonDoc2, jsonString2);
-
-  char jsonString3[200];
-  serializeJson(jsonDoc3, jsonString3);
 
   // Publish the JSON string to a MQTT topic
   
   client.publish(sensor_topic, jsonString1,true);
-  vTaskDelay(pdMS_TO_TICKS(350));
-  client.publish(sensor_topic, jsonString2,true);
-  vTaskDelay(pdMS_TO_TICKS(350));
-  client.publish(sensor_topic, jsonString3,true);
-  vTaskDelay(pdMS_TO_TICKS(350));
+  vTaskDelay(pdMS_TO_TICKS(500));
   
   //client.publish(sensor_topic, jsonString, true);  // Set retained flag to true
   Serial.println("Message sent to MQTT");
@@ -429,24 +377,8 @@ void modbusTask(void* parameter) {
   Serial.println("--------Debugging-----------");
 
   if (client.publish(sensor_topic, jsonString1)) {
-    Serial.println("Message1 sent to MQTT successfully");
-    telnetClient.println("Message1 sent to MQTT successfully");
-  } else {
-    Serial.println("Failed to publish message to MQTT");
-    telnetClient.println("Failed to publish message to MQTT");
-  }
-
-  if (client.publish(sensor_topic, jsonString2)) {
-    Serial.println("Message2 sent to MQTT successfully");
-    telnetClient.println("Message2 sent to MQTT successfully");
-  } else {
-    Serial.println("Failed to publish message to MQTT");
-    telnetClient.println("Failed to publish message to MQTT");
-  }
-
-  if (client.publish(sensor_topic, jsonString3)) {
-    Serial.println("Message3 sent to MQTT successfully");
-    telnetClient.println("Message3 sent to MQTT successfully");
+    Serial.println("Message sent to MQTT successfully");
+    telnetClient.println("Message sent to MQTT successfully");
   } else {
     Serial.println("Failed to publish message to MQTT");
     telnetClient.println("Failed to publish message to MQTT");
@@ -470,18 +402,10 @@ void modbusTask(void* parameter) {
   telnetClient.println(WiFi.status());
 
   Serial.println("JSON content: " + String(jsonString1));
-  Serial.println("JSON content: " + String(jsonString2));
-  Serial.println("JSON content: " + String(jsonString3));
   telnetClient.println("JSON content: " + String(jsonString1));
-  telnetClient.println("JSON content: " + String(jsonString2));
-  telnetClient.println("JSON content: " + String(jsonString3));
-
-  // Check available stack space
-  Serial.println("Available stack space: " + String(uxTaskGetStackHighWaterMark(NULL)));
 
   Serial.println("---------------------------------------");
   telnetClient.println("---------------------------------------");
-  vTaskDelay(pdMS_TO_TICKS(1000));
   
   }
 }
