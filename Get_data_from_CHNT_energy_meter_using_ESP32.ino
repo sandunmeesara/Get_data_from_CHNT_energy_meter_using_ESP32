@@ -33,7 +33,8 @@ PubSubClient client(espClient);
 ModbusRTUMaster modbus(Serial2, dePin); // serial Serial interface, driver enable pin for rs-485 (optional)
 
 //Variables and Constants for Modbus communication
-uint16_t holdingRegisters[2];
+uint16_t holdingRegisters[30];
+double readingData[14];
 uint32_t total,x;
 int dataAddress;
 uint16_t UrAt,IrAt;
@@ -145,7 +146,6 @@ uint16_t readIntData(int dataAddress){
 }
 
 float readFloatData(int dataAddress){
-
   modbus.readHoldingRegisters(1, dataAddress, holdingRegisters,2);
   total = ((uint32_t)holdingRegisters[0]<<16) | holdingRegisters[1];
   String hexString = String(total, HEX);
@@ -258,87 +258,82 @@ void modbusTask(void* parameter) {
   dataAddress = 0x07;
   UrAt = readIntData(dataAddress);
 
-  //print Three Phase Phase voltage(Ua)
+  //Reading Multiple Holding Registers from Ua to PFc
   dataAddress = 0x2006;
-  floatResult = readFloatData(dataAddress) * 0.1;
+  modbus.readHoldingRegisters(1, dataAddress, holdingRegisters,28);
+  for (int i=0; i<29; i+=2) {
+    total = ((uint32_t)holdingRegisters[i]<<16) | holdingRegisters[i+1];
+    String hexString = String(total, HEX);
+    readingData[(i/2)] = hexToFloat(hexString);
+  }
+
+  //print Three Phase Phase voltage(Ua)
+  floatResult = readingData[0] * 0.1;
   Serial.println("Ua : " + String(floatResult) + "v");
   jsonDoc1["Ua"] = floatResult;
 
   //print Three Phase Phase voltage(Ub)
-  dataAddress = 0x2008;
-  floatResult = readFloatData(dataAddress) * 0.1;
+  floatResult = readingData[1] * 0.1;
   Serial.println("Ub : " + String(floatResult) + "v");
   jsonDoc1["Ub"] = floatResult;
 
   //print Three Phase Phase voltage(Uc)
-  dataAddress = 0x200A;
-  floatResult = readFloatData(dataAddress) * 0.1;
+  floatResult = readingData[2] * 0.1;
   Serial.println("Uc : " + String(floatResult) + "v");
   jsonDoc1["Uc"] = floatResult;
 
   //print Three Phase Current(Ia)
-  dataAddress = 0x200C;
-  floatResult = readFloatData(dataAddress) * IrAt * 0.001;
+  floatResult = readingData[3] * IrAt * 0.001;
   Serial.println("Ia : " + String(floatResult) + "A");
   jsonDoc1["Ia"] = floatResult;
 
   //print Three Phase Current(Ib)
-  dataAddress = 0x200E;
-  floatResult = readFloatData(dataAddress) * IrAt * 0.001;
+  floatResult = readingData[4] * IrAt * 0.001;
   Serial.println("Ib : " + String(floatResult) + "A");
   jsonDoc1["Ib"] = floatResult;
 
   //print Three Phase Current(Ic)
-  dataAddress = 0x2010;
-  floatResult = readFloatData(dataAddress) * IrAt * 0.001;
+  floatResult = readingData[5] * IrAt * 0.001;
   Serial.println("Ic : " + String(floatResult) + "A");
   jsonDoc1["Ic"] = floatResult;
 
   //print Combined Active Power(Pt)
-  dataAddress = 0x2012;
-  floatResult = readFloatData(dataAddress) * IrAt * 0.1;
+  floatResult = readingData[6] * IrAt * 0.1;
   Serial.println("Pt : " + String(floatResult) + "W");
   jsonDoc1["Pt"] = floatResult;
 
   //print A Phase active power(Pa)
-  dataAddress = 0x2014;
-  floatResult = readFloatData(dataAddress) * IrAt * 0.1;
+  floatResult = readingData[7] * IrAt * 0.1;
   Serial.println("Pa : " + String(floatResult) + "W");
   jsonDoc1["Pa"] = floatResult;
 
   //print B Phase active power(Pb)
-  dataAddress = 0x2016;
-  floatResult = readFloatData(dataAddress) * IrAt * 0.1;
+  floatResult = readingData[8] * IrAt * 0.1;
   Serial.println("Pb : " + String(floatResult) + "W");
   jsonDoc1["Pb"] = floatResult;
 
   //print C Phase active power(Pc)
-  dataAddress = 0x2018;
-  floatResult = readFloatData(dataAddress) * IrAt * 0.1;
+  floatResult = readingData[9] * IrAt * 0.1;
   Serial.println("Pc : " + String(floatResult) + "W");
   jsonDoc1["Pc"] = floatResult;
 
   //print Combined Power Factor(PFt)
-  dataAddress = 0x202A;
-  floatResult = readFloatData(dataAddress) * 0.001;
+  floatResult = readingData[10] * 0.001;
   Serial.println("PFt : " + String(floatResult));
   jsonDoc2["PFt"] = floatResult;
 
   //print A Phase Power Factor(PFa)
-  dataAddress = 0x202C;
-  floatResult = readFloatData(dataAddress) * 0.001;
+  floatResult = readingData[11] * 0.001;
   Serial.println("PFa : " + String(floatResult));
   jsonDoc1["PFa"] = floatResult;
 
   //print B Phase Power Factor(PFb)
-  dataAddress = 0x202E;
-  floatResult = readFloatData(dataAddress) * 0.001;
+  floatResult = readingData[12] * 0.001;
   Serial.println("PFb : " + String(floatResult));
   jsonDoc1["PFb"] = floatResult;
 
   //print C Phase Power Factor(PFc)
-  dataAddress = 0x2030;
-  floatResult = readFloatData(dataAddress) * 0.001;
+  floatResult = readingData[13] * 0.001;
   Serial.println("PFc : " + String(floatResult));
   jsonDoc1["PFc"] = floatResult;
 
