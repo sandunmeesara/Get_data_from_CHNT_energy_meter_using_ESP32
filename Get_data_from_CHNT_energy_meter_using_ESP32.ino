@@ -248,6 +248,7 @@ void modbusTask(void* parameter) {
 
   // Create a JSON objects for each data categories
   StaticJsonDocument<350> jsonDoc1;
+  StaticJsonDocument<200> jsonDoc2;
 
   //print Current Transformer Rate(IrAt)
   dataAddress = 0x06;
@@ -321,7 +322,7 @@ void modbusTask(void* parameter) {
   dataAddress = 0x202A;
   floatResult = readFloatData(dataAddress) * 0.001;
   Serial.println("PFt : " + String(floatResult));
-  jsonDoc1["PFt"] = floatResult;
+  jsonDoc2["PFt"] = floatResult;
 
   //print A Phase Power Factor(PFa)
   dataAddress = 0x202C;
@@ -345,13 +346,13 @@ void modbusTask(void* parameter) {
   dataAddress = 0x2044;
   floatResult = readFloatData(dataAddress) * 0.01;
   Serial.println("Frequency : " + String(floatResult) + "Hz");
-  jsonDoc1["Freq"] = floatResult;
+  jsonDoc2["Freq"] = floatResult;
 
   //print Forward Total Active Energy - ImpEp
   dataAddress = 0x101E;
   floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt;
   Serial.println("Forward total active energy(ImpEp)  : " + String(floatResult) + "kWh");
-  jsonDoc1["ImpEp"] = floatResult;
+  jsonDoc2["ImpEp"] = floatResult;
 
   //Serial.println(interruptCounter);
   jsonDoc1["Cycle_time(s)"] = int_elapsedTime;  
@@ -362,10 +363,13 @@ void modbusTask(void* parameter) {
   // Serialize the JSON objects to a strings
   char jsonString1[350];
   serializeJson(jsonDoc1, jsonString1);
+  char jsonString2[200];
+  serializeJson(jsonDoc2, jsonString2);
 
   // Publish the JSON string to a MQTT topic
   
   client.publish(sensor_topic, jsonString1,true);
+  client.publish(sensor_topic, jsonString2,true);
   vTaskDelay(pdMS_TO_TICKS(500));
   
   //client.publish(sensor_topic, jsonString, true);  // Set retained flag to true
@@ -377,11 +381,19 @@ void modbusTask(void* parameter) {
   Serial.println("--------Debugging-----------");
 
   if (client.publish(sensor_topic, jsonString1)) {
-    Serial.println("Message sent to MQTT successfully");
-    telnetClient.println("Message sent to MQTT successfully");
+    Serial.println("Message1 sent to MQTT successfully");
+    telnetClient.println("Message1 sent to MQTT successfully");
   } else {
-    Serial.println("Failed to publish message to MQTT");
-    telnetClient.println("Failed to publish message to MQTT");
+    Serial.println("Failed to publish message1 to MQTT");
+    telnetClient.println("Failed to publish message1 to MQTT");
+  }
+
+  if (client.publish(sensor_topic, jsonString1)) {
+    Serial.println("Message2 sent to MQTT successfully");
+    telnetClient.println("Message2 sent to MQTT successfully");
+  } else {
+    Serial.println("Failed to publish message2 to MQTT");
+    telnetClient.println("Failed to publish message2 to MQTT");
 
     count_for_reboot += 1;
     if(count_for_reboot > 2){
@@ -403,6 +415,8 @@ void modbusTask(void* parameter) {
 
   Serial.println("JSON content: " + String(jsonString1));
   telnetClient.println("JSON content: " + String(jsonString1));
+  Serial.println("JSON content: " + String(jsonString2));
+  telnetClient.println("JSON content: " + String(jsonString2));
 
   Serial.println("---------------------------------------");
   telnetClient.println("---------------------------------------");
