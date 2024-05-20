@@ -248,30 +248,8 @@ void modbusTask(void* parameter) {
 
   // Create a JSON objects for each data categories
   StaticJsonDocument<200> jsonDoc1;
-  //JsonObject Energy_Meter_Data = jsonDoc1.createNestedObject("Energy_Meter_Data");
-  //JsonObject Voltage_Data = jsonDoc1.createNestedObject("Voltage_Data");
-  //JsonObject Current_Data = jsonDoc1.createNestedObject("Current_Data");
-
   StaticJsonDocument<200> jsonDoc2;
-  //JsonObject Power_Data = jsonDoc2.createNestedObject("Power_Data");
-
   StaticJsonDocument<200> jsonDoc3;
-  //JsonObject Power_Secondary_Data = jsonDoc3.createNestedObject("Power_Secondary_Data");
-
-  //print Software version
-  //dataAddress = 0x00;
-  //Serial.println("Software version : " + String(readIntData(dataAddress)));
-  //jsonDoc1["Soft_Ver."] = readIntData(dataAddress);
- 
-  //print Programming Code
-  //dataAddress = 0x01;
-  //Serial.println("Programming Code : " + String(readIntData(dataAddress)));
-  //jsonDoc1["Pro_Code"] = readIntData(dataAddress);
-
-  //print Network Selection
-  //dataAddress = 0x03;
-  //Serial.println("Network Selection : " + String(readIntData(dataAddress)));
-  //jsonDoc1["Net_Select"] = readIntData(dataAddress);
   
   //print Current Transformer Rate(IrAt)
   dataAddress = 0x06;
@@ -279,37 +257,6 @@ void modbusTask(void* parameter) {
   Serial.println("Current Transformer Rate(IrAt) : " + String(IrAt));
   jsonDoc1["IrAt"] = IrAt;
   
-
-  //print Voltage Transformer Rate(UrAt)
-  //dataAddress = 0x07;
-  //UrAt = readIntData(dataAddress);
-  //Serial.println("Voltage Transformer Rate(UrAt) : " + String(UrAt));
-  //jsonDoc1["UrAt"] = UrAt;
-
-  //print Rotating Display Time(s)
-  //dataAddress = 0x0A;
-  //Serial.println("Rotating Display Time(s) : " + String(readIntData(dataAddress)));
-
-  //print Backlight Time Control(s)
-  //dataAddress = 0x0B;
-  //Serial.println("Backlight Time Control(s) : " + String(readIntData(dataAddress)));
-
-  //print Protocol Switching
-  //dataAddress = 0x2C;
-  //Serial.println("Protocol Switching : " + String(readIntData(dataAddress)));
-  //jsonDoc1["Protocol"] = readIntData(dataAddress);
-
-  //print Communication Baud Rate
-  //dataAddress = 0x2D;
-  //Serial.println("Communication Baud Rate : " + String(readIntData(dataAddress)));
-  //jsonDoc1["Baud_Rate"] = readIntData(dataAddress);
-
-  //print Communication Address
-  //dataAddress = 0x2E;
-  //Serial.println("Communication Address : " + String(readIntData(dataAddress)));
-  //jsonDoc1["D_Id"] = readIntData(dataAddress);
-
-
   //print Three Phase line voltage(Uab)
   dataAddress = 0x2000;
   floatResult = readFloatData(dataAddress) * 0.1;
@@ -447,36 +394,6 @@ void modbusTask(void* parameter) {
   floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt;
   Serial.println("Forward total active energy(ImpEp)  : " + String(floatResult) + "kWh");
   jsonDoc3["ImpEp"] = floatResult;
-
-  //print Reverse Total Active Energy - ExpEp
-  //dataAddress = 0x1028;
-  //floatResult = readFloatData(dataAddress) * IrAt;
-  //Serial.println("Reverse total active energy(ExpEp)  : " + String(floatResult) + "kWh");
-  //jsonDoc3["ExpEp"] = floatResult;
-
-  //print Total reactive energy of the first quadrant 
-  //dataAddress = 0x1032;
-  //floatResult = readFloatData(dataAddress) * IrAt;
-  //Serial.println("Total reactive energy of the first quadrant : " + String(floatResult) + "kvarh");
-  //jsonDoc3["1Q"] = floatResult;
-
-  //print Total reactive energy of the second quadrant 
-  //dataAddress = 0x103C;
-  //floatResult = readFloatData(dataAddress) * IrAt;
-  //Serial.println("Total reactive energy of the second quadrant : " + String(floatResult) + "kvarh");
-  //jsonDoc3["2Q"] = floatResult;
-
-  //print Total reactive energy of the third quadrant 
-  //dataAddress = 0x1046;
-  //floatResult = readFloatData(dataAddress) * IrAt;
-  //Serial.println("Total reactive energy of the third quadrant : " + String(floatResult) + "kvarh");
-  //jsonDoc3["3Q"] = floatResult;
-  
-  //print Total reactive energy of the fourth quadrant 
-  //dataAddress = 0x1050;
-  //floatResult = readFloatData(dataAddress) * IrAt;
-  //Serial.println("Total reactive energy of the fourth quadrant : " + String(floatResult) + "kvarh");
-  //jsonDoc3["4Q"] = floatResult;
 
   //Serial.println(interruptCounter);
   jsonDoc3["Cycle_time(s)"] = int_elapsedTime;  
