@@ -17,7 +17,8 @@ const char* mqtt_user = "Mosq_Admin";
 const char* mqtt_password = "iot@MPLmqtt24";
 
 // Replace with your sensor topic
-const char* sensor_topic = "54K-1";
+const char* sensor_topic = "54K-2";
+const int Int_Threshold = 1700;
 
 //Pin define for max 485 module
 const int8_t rxPin = 16;
@@ -121,7 +122,7 @@ void IRAM_ATTR handleInterrupt() {
   //interruptCounter += 1;
   unsigned long currentMillis_delay = millis(); // Get the current time
   long x_time = currentMillis_delay - previousMillis_delay;
-  if (x_time > 1700) {
+  if (x_time > Int_Threshold) {
     interruptCounter += 1;
     previousMillis_delay = currentMillis_delay; // Save the time of the first interrupt
   }
