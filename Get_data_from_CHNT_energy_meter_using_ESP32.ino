@@ -33,8 +33,8 @@ PubSubClient client(espClient);
 ModbusRTUMaster modbus(Serial2, dePin); // serial Serial interface, driver enable pin for rs-485 (optional)
 
 //Variables and Constants for Modbus communication
-uint16_t holdingRegisters[30];
-double readingData[14];
+uint16_t holdingRegisters[44];
+float readingData[22];
 uint32_t total,x;
 int dataAddress;
 uint16_t UrAt,IrAt;
@@ -260,11 +260,11 @@ void modbusTask(void* parameter) {
 
   //Reading Multiple Holding Registers from Ua to PFc
   dataAddress = 0x2006;
-  modbus.readHoldingRegisters(1, dataAddress, holdingRegisters,28);
-  for (int i=0; i<29; i+=2) {
+  modbus.readHoldingRegisters(1, dataAddress, holdingRegisters,44);
+  for (int i=0; i<43; i+=2) {
     total = ((uint32_t)holdingRegisters[i]<<16) | holdingRegisters[i+1];
     String hexString = String(total, HEX);
-    readingData[(i/2)] = hexToFloat(hexString);
+    readingData[i/2] = hexToFloat(hexString);
   }
 
   //print Three Phase Phase voltage(Ua)
@@ -318,22 +318,22 @@ void modbusTask(void* parameter) {
   jsonDoc1["Pc"] = floatResult;
 
   //print Combined Power Factor(PFt)
-  floatResult = readingData[10] * 0.001;
+  floatResult = readingData[18] * 0.001;
   Serial.println("PFt : " + String(floatResult));
   jsonDoc2["PFt"] = floatResult;
 
   //print A Phase Power Factor(PFa)
-  floatResult = readingData[11] * 0.001;
+  floatResult = readingData[19] * 0.001;
   Serial.println("PFa : " + String(floatResult));
   jsonDoc1["PFa"] = floatResult;
 
   //print B Phase Power Factor(PFb)
-  floatResult = readingData[12] * 0.001;
+  floatResult = readingData[20] * 0.001;
   Serial.println("PFb : " + String(floatResult));
   jsonDoc1["PFb"] = floatResult;
 
   //print C Phase Power Factor(PFc)
-  floatResult = readingData[13] * 0.001;
+  floatResult = readingData[21] * 0.001;
   Serial.println("PFc : " + String(floatResult));
   jsonDoc1["PFc"] = floatResult;
 
