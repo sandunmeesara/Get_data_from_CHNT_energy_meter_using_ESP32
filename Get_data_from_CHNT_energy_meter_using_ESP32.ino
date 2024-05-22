@@ -243,21 +243,10 @@ void modbusTask(void* parameter) {
   for (;;) {
 
   ArduinoOTA.handle();
-
-  // Create a JSON objects for each data categories
-  //StaticJsonDocument<200> jsonDoc1;
-  //JsonObject Energy_Meter_Data = jsonDoc1.createNestedObject("Energy_Meter_Data");
-  //JsonObject Voltage_Data = jsonDoc1.createNestedObject("Voltage_Data");
-  //JsonObject Current_Data = jsonDoc1.createNestedObject("Current_Data");
-
-  //StaticJsonDocument<200> jsonDoc2;
-  //JsonObject Power_Data = jsonDoc2.createNestedObject("Power_Data");
-
-  //StaticJsonDocument<200> jsonDoc3;
-  //JsonObject Power_Secondary_Data = jsonDoc3.createNestedObject("Power_Secondary_Data");
   
   //---------------------------------------------------------------------------------------------------
   //Get Temperature Data from Temperature Data Aqucision Module
+  StaticJsonDocument<200> jsonDoc3;
   StaticJsonDocument<200> jsonDoc4;
   String doc_name;
   int deviceID;
@@ -270,7 +259,7 @@ void modbusTask(void* parameter) {
     doc_name = "TDA" + String(deviceID) + String(doc_count);
     float x = readIntData(dataAddress,deviceID)/10.0;
     Serial.println(doc_name +":"+ String(x));
-    jsonDoc4[doc_name] = x;
+    jsonDoc3[doc_name] = x;
     doc_count += 1;
   }
 
@@ -285,298 +274,40 @@ void modbusTask(void* parameter) {
     doc_count += 1;
   }
 
-  //---------------------------------------------------------------------------------------------------
-  
-  /*
-  //print Software version
-  dataAddress = 0x00;
-  Serial.println("Software version : " + String(readIntData(dataAddress)));
-  //jsonDoc1["Soft_Ver."] = readIntData(dataAddress);
- 
-  //print Programming Code
-  dataAddress = 0x01;
-  Serial.println("Programming Code : " + String(readIntData(dataAddress)));
-  //jsonDoc1["Pro_Code"] = readIntData(dataAddress);
-
-  //print Network Selection
-  dataAddress = 0x03;
-  Serial.println("Network Selection : " + String(readIntData(dataAddress)));
-  //jsonDoc1["Net_Select"] = readIntData(dataAddress);
-  
-  //print Current Transformer Rate(IrAt)
-  dataAddress = 0x06;
-  IrAt = readIntData(dataAddress);
-  Serial.println("Current Transformer Rate(IrAt) : " + String(IrAt));
-  jsonDoc1["IrAt"] = IrAt;
-  
-
-  //print Voltage Transformer Rate(UrAt)
-  dataAddress = 0x07;
-  UrAt = readIntData(dataAddress);
-  Serial.println("Voltage Transformer Rate(UrAt) : " + String(UrAt));
-  jsonDoc1["UrAt"] = UrAt;
-
-  //print Rotating Display Time(s)
-  dataAddress = 0x0A;
-  Serial.println("Rotating Display Time(s) : " + String(readIntData(dataAddress)));
-
-  //print Backlight Time Control(s)
-  dataAddress = 0x0B;
-  Serial.println("Backlight Time Control(s) : " + String(readIntData(dataAddress)));
-
-  //print Protocol Switching
-  dataAddress = 0x2C;
-  Serial.println("Protocol Switching : " + String(readIntData(dataAddress)));
-  //jsonDoc1["Protocol"] = readIntData(dataAddress);
-
-  //print Communication Baud Rate
-  dataAddress = 0x2D;
-  Serial.println("Communication Baud Rate : " + String(readIntData(dataAddress)));
-  //jsonDoc1["Baud_Rate"] = readIntData(dataAddress);
-
-  //print Communication Address
-  dataAddress = 0x2E;
-  Serial.println("Communication Address : " + String(readIntData(dataAddress)));
-  //jsonDoc1["D_Id"] = readIntData(dataAddress);
-
-
-  //print Three Phase line voltage(Uab)
-  dataAddress = 0x2000;
-  floatResult = readFloatData(dataAddress) * 0.1;
-  Serial.println("Uab : " + String(floatResult) + "v");
-  jsonDoc1["Uab"] = floatResult;
-
-  //print Three Phase line voltage(Ubc)
-  dataAddress = 0x2002;
-  floatResult = readFloatData(dataAddress) * 0.1;
-  Serial.println("Ubc : " + String(floatResult) + "v");
-  jsonDoc1["Ubc"] = floatResult;
-
-  //print Three Phase line voltage(Uca)
-  dataAddress = 0x2004;
-  floatResult = readFloatData(dataAddress) * 0.1;
-  Serial.println("Uca : " + String(floatResult) + "v");
-  jsonDoc1["Uca"] = floatResult;
-
-  //print Three Phase Phase voltage(Ua)
-  dataAddress = 0x2006;
-  floatResult = readFloatData(dataAddress) * 0.1;
-  Serial.println("Ua : " + String(floatResult) + "v");
-  jsonDoc1["Ua"] = floatResult;
-
-  //print Three Phase Phase voltage(Ub)
-  dataAddress = 0x2008;
-  floatResult = readFloatData(dataAddress) * 0.1;
-  Serial.println("Ub : " + String(floatResult) + "v");
-  jsonDoc1["Ub"] = floatResult;
-
-  //print Three Phase Phase voltage(Uc)
-  dataAddress = 0x200A;
-  floatResult = readFloatData(dataAddress) * 0.1;
-  Serial.println("Uc : " + String(floatResult) + "v");
-  jsonDoc1["Uc"] = floatResult;
-
-  //print Three Phase Current(Ia)
-  dataAddress = 0x200C;
-  floatResult = readFloatData(dataAddress) * IrAt * 0.001;
-  Serial.println("Ia : " + String(floatResult) + "A");
-  jsonDoc1["Ia"] = floatResult;
-
-  //print Three Phase Current(Ib)
-  dataAddress = 0x200E;
-  floatResult = readFloatData(dataAddress) * IrAt * 0.001;
-  Serial.println("Ib : " + String(floatResult) + "A");
-  jsonDoc1["Ib"] = floatResult;
-
-  //print Three Phase Current(Ic)
-  dataAddress = 0x2010;
-  floatResult = readFloatData(dataAddress) * IrAt * 0.001;
-  Serial.println("Ic : " + String(floatResult) + "A");
-  jsonDoc1["Ic"] = floatResult;
-
-  //print Combined Active Power(Pt)
-  dataAddress = 0x2012;
-  floatResult = readFloatData(dataAddress) * IrAt * 0.1;
-  Serial.println("Pt : " + String(floatResult) + "W");
-  jsonDoc2["Pt"] = floatResult;
-
-  //print A Phase active power(Pa)
-  dataAddress = 0x2014;
-  floatResult = readFloatData(dataAddress) * IrAt * 0.1;
-  Serial.println("Pa : " + String(floatResult) + "W");
-  jsonDoc2["Pa"] = floatResult;
-
-  //print B Phase active power(Pb)
-  dataAddress = 0x2016;
-  floatResult = readFloatData(dataAddress) * IrAt * 0.1;
-  Serial.println("Pb : " + String(floatResult) + "W");
-  jsonDoc2["Pb"] = floatResult;
-
-  //print C Phase active power(Pc)
-  dataAddress = 0x2018;
-  floatResult = readFloatData(dataAddress) * IrAt * 0.1;
-  Serial.println("Pc : " + String(floatResult) + "W");
-  jsonDoc2["Pc"] = floatResult;
-
-  //print Combined Reactive Power(Qt)
-  dataAddress = 0x201A;
-  floatResult = readFloatData(dataAddress) * IrAt * 0.1;
-  Serial.println("Qt : " + String(floatResult) + "var");
-  jsonDoc2["Qt"] = floatResult;
-
-  //print A Phase Reactive Power(Qa)
-  dataAddress = 0x201C;
-  floatResult = readFloatData(dataAddress) * IrAt * 0.1;
-  Serial.println("Qa : " + String(floatResult) + "var");
-  jsonDoc2["Qa"] = floatResult;
-
-  //print B Phase Reactive Power(Qb)
-  dataAddress = 0x201E;
-  floatResult = readFloatData(dataAddress) * IrAt * 0.1;
-  Serial.println("Qb : " + String(floatResult) + "var");
-  jsonDoc2["Qb"] = floatResult;
-
-  //print C Phase Reactive Power(Qc)
-  dataAddress = 0x2020;
-  floatResult = readFloatData(dataAddress) * IrAt * 0.1;
-  Serial.println("Qc : " + String(floatResult) + "var");
-  jsonDoc2["Qc"] = floatResult;
-
-  //print Combined Power Factor(PFt)
-  dataAddress = 0x202A;
-  floatResult = readFloatData(dataAddress) * 0.001;
-  Serial.println("PFt : " + String(floatResult));
-  jsonDoc2["PFt"] = floatResult;
-
-  //print A Phase Power Factor(PFa)
-  dataAddress = 0x202C;
-  floatResult = readFloatData(dataAddress) * 0.001;
-  Serial.println("PFa : " + String(floatResult));
-  jsonDoc2["PFa"] = floatResult;
-
-  //print B Phase Power Factor(PFb)
-  dataAddress = 0x202E;
-  floatResult = readFloatData(dataAddress) * 0.001;
-  Serial.println("PFb : " + String(floatResult));
-  jsonDoc3["PFb"] = floatResult;
-
-  //print C Phase Power Factor(PFc)
-  dataAddress = 0x2030;
-  floatResult = readFloatData(dataAddress) * 0.001;
-  Serial.println("PFc : " + String(floatResult));
-  jsonDoc3["PFc"] = floatResult;
-
-  //print Frequency
-  dataAddress = 0x2044;
-  floatResult = readFloatData(dataAddress) * 0.01;
-  Serial.println("Frequency : " + String(floatResult) + "Hz");
-  jsonDoc3["Freq"] = floatResult;
-
-  //print Forward Total Active Energy - ImpEp
-  dataAddress = 0x101E;
-  floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt;
-  Serial.println("Forward total active energy(ImpEp)  : " + String(floatResult) + "kWh");
-  jsonDoc3["ImpEp"] = floatResult;
-
-  //print Reverse Total Active Energy - ExpEp
-  dataAddress = 0x1028;
-  floatResult = readFloatData(dataAddress) * IrAt;
-  Serial.println("Reverse total active energy(ExpEp)  : " + String(floatResult) + "kWh");
-  jsonDoc3["ExpEp"] = floatResult;
-
-  //print Total reactive energy of the first quadrant 
-  dataAddress = 0x1032;
-  floatResult = readFloatData(dataAddress) * IrAt;
-  Serial.println("Total reactive energy of the first quadrant : " + String(floatResult) + "kvarh");
-  jsonDoc3["1Q"] = floatResult;
-
-  //print Total reactive energy of the second quadrant 
-  dataAddress = 0x103C;
-  floatResult = readFloatData(dataAddress) * IrAt;
-  Serial.println("Total reactive energy of the second quadrant : " + String(floatResult) + "kvarh");
-  jsonDoc3["2Q"] = floatResult;
-
-  //print Total reactive energy of the third quadrant 
-  dataAddress = 0x1046;
-  floatResult = readFloatData(dataAddress) * IrAt;
-  Serial.println("Total reactive energy of the third quadrant : " + String(floatResult) + "kvarh");
-  jsonDoc3["3Q"] = floatResult;
-  
-  //print Total reactive energy of the fourth quadrant 
-  dataAddress = 0x1050;
-  floatResult = readFloatData(dataAddress) * IrAt;
-  Serial.println("Total reactive energy of the fourth quadrant : " + String(floatResult) + "kvarh");
-  jsonDoc3["4Q"] = floatResult;
-
-  //Serial.println(interruptCounter);
-  jsonDoc3["Cycle_time(s)"] = int_elapsedTime;  
-
-  //Serial.println(interruptCounter);
-  jsonDoc3["RPM"] = rpm;  */
-
-  // Serialize the JSON objects to a strings
-  char jsonString1[200];
-  serializeJson(jsonDoc1, jsonString1);
-
-  char jsonString2[200];
-  serializeJson(jsonDoc2, jsonString2);
-
   char jsonString3[200];
   serializeJson(jsonDoc3, jsonString3);
 
-  //This is for sending temperature data
   char jsonString4[200];
   serializeJson(jsonDoc4, jsonString4);
 
   // Publish the JSON string to a MQTT topic
-  /*
-  client.publish(sensor_topic, jsonString1,true);
-  vTaskDelay(pdMS_TO_TICKS(350));
-  client.publish(sensor_topic, jsonString2,true);
-  vTaskDelay(pdMS_TO_TICKS(350));
   client.publish(sensor_topic, jsonString3,true);
-  vTaskDelay(pdMS_TO_TICKS(350));*/
+  vTaskDelay(pdMS_TO_TICKS(1000));
   client.publish(sensor_topic, jsonString4,true);
-  vTaskDelay(pdMS_TO_TICKS(350));
+  vTaskDelay(pdMS_TO_TICKS(1000));
   
-  //client.publish(sensor_topic, jsonString, true);  // Set retained flag to true
   Serial.println("Message sent to MQTT");
   
   //------------------------------------------------------------------------------------------
 
+
   //For Debugging
   Serial.println("--------Debugging-----------");
-  /*
-  if (client.publish(sensor_topic, jsonString1)) {
+
+  if (client.publish(sensor_topic, jsonString3)) {
     Serial.println("Message1 sent to MQTT successfully");
     telnetClient.println("Message1 sent to MQTT successfully");
   } else {
-    Serial.println("Failed to publish message to MQTT");
-    telnetClient.println("Failed to publish message to MQTT");
+    Serial.println("Failed to publish message1 to MQTT");
+    telnetClient.println("Failed to publish message1 to MQTT");
   }
-
-  if (client.publish(sensor_topic, jsonString2)) {
+  
+  if (client.publish(sensor_topic, jsonString4)) {
     Serial.println("Message2 sent to MQTT successfully");
     telnetClient.println("Message2 sent to MQTT successfully");
   } else {
-    Serial.println("Failed to publish message to MQTT");
-    telnetClient.println("Failed to publish message to MQTT");
-  }
-
-  if (client.publish(sensor_topic, jsonString3)) {
-    Serial.println("Message3 sent to MQTT successfully");
-    telnetClient.println("Message3 sent to MQTT successfully");
-  } else {
-    Serial.println("Failed to publish message to MQTT");
-    telnetClient.println("Failed to publish message to MQTT");
-  }
-  */
-  if (client.publish(sensor_topic, jsonString4)) {
-    Serial.println("Message4 sent to MQTT successfully");
-    telnetClient.println("Message4 sent to MQTT successfully");
-  } else {
-    Serial.println("Failed to publish message to MQTT");
-    telnetClient.println("Failed to publish message to MQTT");
+    Serial.println("Failed to publish message2 to MQTT");
+    telnetClient.println("Failed to publish message2 to MQTT");
 
     count_for_reboot += 1;
     if(count_for_reboot > 2){
@@ -595,22 +326,14 @@ void modbusTask(void* parameter) {
   telnetClient.println("Wi-Fi Status: ");
   Serial.println(WiFi.status());
   telnetClient.println(WiFi.status());
-
-  Serial.println("JSON content: " + String(jsonString1));
-  Serial.println("JSON content: " + String(jsonString2));
+  
   Serial.println("JSON content: " + String(jsonString3));
   Serial.println("JSON content: " + String(jsonString4));
-  telnetClient.println("JSON content: " + String(jsonString1));
-  telnetClient.println("JSON content: " + String(jsonString2));
   telnetClient.println("JSON content: " + String(jsonString3));
   telnetClient.println("JSON content: " + String(jsonString4));
 
-  // Check available stack space
-  Serial.println("Available stack space: " + String(uxTaskGetStackHighWaterMark(NULL)));
-
   Serial.println("---------------------------------------");
   telnetClient.println("---------------------------------------");
-  vTaskDelay(pdMS_TO_TICKS(1000));
   
   }
 }
