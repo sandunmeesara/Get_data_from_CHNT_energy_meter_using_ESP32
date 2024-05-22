@@ -17,7 +17,7 @@ const char* mqtt_user = "Mosq_Admin";
 const char* mqtt_password = "iot@MPLmqtt24";
 
 // Replace with your sensor topic
-const char* sensor_topic = "54K-2";
+const char* sensor_topic = "54K-1";
 const int Int_Threshold = 1700;
 
 //Pin define for max 485 module
@@ -90,6 +90,16 @@ void setup() {
 
 // Local Functions for Tasks
 
+void processError() {
+  if (modbus.getTimeoutFlag()) {
+    telnetClient.println("Connection timed out");
+    modbus.clearTimeoutFlag();
+  }else {
+    telnetClient.println("Received exception response: ");
+    telnetClient.println(modbus.getExceptionResponse());
+  }
+}
+
 void Reconnect() {
 
   while (!client.connected()) {
@@ -140,17 +150,27 @@ void IRAM_ATTR handleInterrupt() {
 }
 
 uint16_t readIntData(int dataAddress){
-  modbus.readHoldingRegisters(1, dataAddress, holdingRegisters,1);
-  x = holdingRegisters[0];
-  return x;
+  if(modbus.readHoldingRegisters(1, dataAddress, holdingRegisters,1)){
+    x = holdingRegisters[0];
+    return x;
+  }else{
+    telnetClient.println("Encountering errors when reading single holding registers!");
+    client.publish(sensor_topic, "{Sin.Hol.Reg.Error:-1}",true);
+    processError();
+  }
 }
 
 float readFloatData(int dataAddress){
-  modbus.readHoldingRegisters(1, dataAddress, holdingRegisters,2);
-  total = ((uint32_t)holdingRegisters[0]<<16) | holdingRegisters[1];
-  String hexString = String(total, HEX);
-  float floatResult = hexToFloat(hexString);
-  return floatResult;
+  if(modbus.readHoldingRegisters(1, dataAddress, holdingRegisters,2)){
+    total = ((uint32_t)holdingRegisters[0]<<16) | holdingRegisters[1];
+    String hexString = String(total, HEX);
+    float floatResult = hexToFloat(hexString);
+    return floatResult;
+  }else{
+    telnetClient.println("Encountering errors when reading double holding registers!");
+    client.publish(sensor_topic, "{Dou.Hol.Reg.Error:-1}",true);
+    processError();
+  }
 }
 
 String decimalToHex(String decimalString) {
@@ -253,18 +273,37 @@ void modbusTask(void* parameter) {
   //print Current Transformer Rate(IrAt)
   dataAddress = 0x06;
   IrAt = readIntData(dataAddress);
+  // Removing spikes
+  if(IrAt != 27){
+    telnetClient.println("Encountering Spikes!");
+    client.publish(sensor_topic, "{IrAt:-1}",true);
+    continue;
+  }
 
   //print Voltage Transformer Rate(UrAt)
   dataAddress = 0x07;
   UrAt = readIntData(dataAddress);
 
+  // Removing spikes
+  if(UrAt != 10){
+    telnetClient.println("Encountering Spikes!");
+    client.publish(sensor_topic, "{UrAt:-1}",true);
+    continue;
+  }
+
   //Reading Multiple Holding Registers from Ua to PFc
   dataAddress = 0x2006;
-  modbus.readHoldingRegisters(1, dataAddress, holdingRegisters,44);
-  for (int i=0; i<43; i+=2) {
-    total = ((uint32_t)holdingRegisters[i]<<16) | holdingRegisters[i+1];
-    String hexString = String(total, HEX);
-    readingData[i/2] = hexToFloat(hexString);
+  if(modbus.readHoldingRegisters(1, dataAddress, holdingRegisters,44)){
+    for (int i=0; i<43; i+=2) {
+      total = ((uint32_t)holdingRegisters[i]<<16) | holdingRegisters[i+1];
+      String hexString = String(total, HEX);
+      readingData[i/2] = hexToFloat(hexString);
+    }
+  }else{
+    telnetClient.println("Encountering errors when reading multiple holding registers!");
+    client.publish(sensor_topic, "{Mul.Hol.Reg.Error:-1}",true);
+    processError();
+    continue;
   }
 
   //print Three Phase Phase voltage(Ua)
@@ -300,7 +339,7 @@ void modbusTask(void* parameter) {
   //print Combined Active Power(Pt)
   floatResult = readingData[6] * IrAt * 0.1;
   Serial.println("Pt : " + String(floatResult) + "W");
-  jsonDoc1["Pt"] = floatResult;
+  jsonDoc2["Pt"] = floatResult;
 
   //print A Phase active power(Pa)
   floatResult = readingData[7] * IrAt * 0.1;
@@ -350,10 +389,10 @@ void modbusTask(void* parameter) {
   jsonDoc2["ImpEp"] = floatResult;
 
   //Serial.println(interruptCounter);
-  jsonDoc1["Cycle_time(s)"] = int_elapsedTime;  
+  jsonDoc2["Cycle_time(s)"] = int_elapsedTime;  
 
   //Serial.println(interruptCounter);
-  jsonDoc1["RPM"] = rpm;  
+  jsonDoc2["RPM"] = rpm;  
 
   // Serialize the JSON objects to a strings
   char jsonString1[350];
@@ -364,6 +403,7 @@ void modbusTask(void* parameter) {
   // Publish the JSON string to a MQTT topic
   
   client.publish(sensor_topic, jsonString1,true);
+  vTaskDelay(pdMS_TO_TICKS(500));
   client.publish(sensor_topic, jsonString2,true);
   vTaskDelay(pdMS_TO_TICKS(500));
   
@@ -383,7 +423,7 @@ void modbusTask(void* parameter) {
     telnetClient.println("Failed to publish message1 to MQTT");
   }
 
-  if (client.publish(sensor_topic, jsonString1)) {
+  if (client.publish(sensor_topic, jsonString2)) {
     Serial.println("Message2 sent to MQTT successfully");
     telnetClient.println("Message2 sent to MQTT successfully");
   } else {
