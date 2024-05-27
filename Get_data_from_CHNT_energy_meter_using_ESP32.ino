@@ -50,6 +50,8 @@ int rpm = 0;
 int interruptCounter = 0;
 volatile bool firstInterrupt = true;
 
+bool error_encountered;
+
 // Function prototypes
 void modbusTask(void* parameter);
 void interruptTask(void* parameter);
@@ -87,6 +89,16 @@ void setup() {
 }
 
 // Local Functions for Tasks
+
+void processError() {
+  if (modbus.getTimeoutFlag()) {
+    telnetClient.println("Connection timed out");
+    modbus.clearTimeoutFlag();
+  }else {
+    telnetClient.println("Received exception response: ");
+    telnetClient.println(modbus.getExceptionResponse());
+  }
+}
 
 void Reconnect() {
 
@@ -138,9 +150,15 @@ void IRAM_ATTR handleInterrupt() {
 }
 
 uint16_t readIntData(int dataAddress,int device_id = 1){
-  modbus.readHoldingRegisters(device_id, dataAddress, holdingRegisters,1);
-  x = holdingRegisters[0];
-  return x;
+  if(modbus.readHoldingRegisters(device_id, dataAddress, holdingRegisters,1)){
+    x = holdingRegisters[0];
+    error_encountered = false;
+    return x;
+  }else{
+    processError();
+    error_encountered = true;
+    return 0;
+  } 
 }
 
 float readFloatData(int dataAddress,int device_id = 1){
@@ -258,17 +276,27 @@ void modbusTask(void* parameter) {
   for(dataAddress = 8;dataAddress<16;dataAddress++){
     doc_name = "TDA" + String(deviceID) + String(doc_count);
     float x = readIntData(dataAddress,deviceID)/10.0;
+    if(error_encountered == true){
+      doc_count += 1;
+      continue;
+    }
     Serial.println(doc_name +":"+ String(x));
     jsonDoc3[doc_name] = x;
     doc_count += 1;
   }
 
+  delay(250);
+  
   //Get Device 2 Data
   deviceID = 3;
   doc_count = 0;
   for(dataAddress = 8;dataAddress<16;dataAddress++){
     doc_name = "TDA" + String(deviceID) + String(doc_count);
     float x = readIntData(dataAddress,deviceID)/10.0;
+    if(error_encountered == true){
+      doc_count += 1;
+      continue;
+    }
     Serial.println(doc_name +":"+ String(x));
     jsonDoc4[doc_name] = x;
     doc_count += 1;
@@ -282,9 +310,9 @@ void modbusTask(void* parameter) {
 
   // Publish the JSON string to a MQTT topic
   client.publish(sensor_topic, jsonString3,true);
-  vTaskDelay(pdMS_TO_TICKS(1000));
+  vTaskDelay(pdMS_TO_TICKS(500));
   client.publish(sensor_topic, jsonString4,true);
-  vTaskDelay(pdMS_TO_TICKS(1000));
+  vTaskDelay(pdMS_TO_TICKS(500));
   
   Serial.println("Message sent to MQTT");
   
