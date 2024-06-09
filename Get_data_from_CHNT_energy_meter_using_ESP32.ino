@@ -17,8 +17,14 @@ const char* mqtt_user = "Mosq_Admin";
 const char* mqtt_password = "iot@MPLmqtt24";
 
 // Replace with your sensor topic
-const char* sensor_topic = "54K-1";
-const int Int_Threshold = 1700;
+
+//const char* sensor_topic = "54K-1";
+const char* sensor_topic = "54K-2";
+//const char* sensor_topic = "OMSO-I";
+//const char* sensor_topic = "OMSO-II";
+//const char* sensor_topic = "EX-02";
+
+const int Int_Threshold = 1500;
 
 //Pin define for max 485 module
 const int8_t rxPin = 16;
@@ -47,9 +53,9 @@ volatile unsigned long previousMillis = 0;
 volatile unsigned long elapsedTime = 0;
 volatile unsigned long int_previousMillis = 0;
 volatile float int_elapsedTime = 0;
-unsigned long previousMillis_delay = 0;
+volatile unsigned long previousMillis_delay = 0;
 int rpm = 0;
-int interruptCounter = 0;
+volatile int interruptCounter = 0;
 volatile bool firstInterrupt = true;
 
 // Function prototypes
@@ -131,7 +137,7 @@ void Reconnect() {
 void IRAM_ATTR handleInterrupt() {
   //increament counter
   //interruptCounter += 1;
-  unsigned long currentMillis_delay = millis(); // Get the current time
+  volatile unsigned long currentMillis_delay = millis(); // Get the current time
   long x_time = currentMillis_delay - previousMillis_delay;
   if (x_time > Int_Threshold) {
     interruptCounter += 1;
@@ -462,7 +468,7 @@ void modbusTask(void* parameter) {
 
 void interruptTask(void* parameter) {
 
-  unsigned long currentMillis = millis(); // Get the current time
+  volatile unsigned long currentMillis = millis(); // Get the current time
   previousMillis = currentMillis;
   
   pinMode(sensorPin, INPUT_PULLUP); // Set the sensor pin as input with internal pull-up resistor
