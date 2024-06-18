@@ -19,7 +19,7 @@ const char* mqtt_password = "iot@MPLmqtt24";
 // Replace with your sensor topic
 
 //const char* sensor_topic = "54K-1";
-const char* sensor_topic = "54K-2";
+const char* sensor_topic = "Main-Power-Panel";
 //const char* sensor_topic = "OMSO-I";
 //const char* sensor_topic = "OMSO-II";
 //const char* sensor_topic = "EX-02";
@@ -176,6 +176,7 @@ float readFloatData(int dataAddress){
     telnetClient.println("Encountering errors when reading double holding registers!");
     client.publish(sensor_topic, "{Dou.Hol.Reg.Error:-1}",true);
     processError();
+    return -1;
   }
 }
 
@@ -276,6 +277,7 @@ void modbusTask(void* parameter) {
   StaticJsonDocument<350> jsonDoc1;
   StaticJsonDocument<200> jsonDoc2;
 
+  /*
   //print Current Transformer Rate(IrAt)
   dataAddress = 0x06;
   IrAt = readIntData(dataAddress);
@@ -393,12 +395,34 @@ void modbusTask(void* parameter) {
   floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt;
   Serial.println("Forward total active energy(ImpEp)  : " + String(floatResult) + "kWh");
   jsonDoc2["ImpEp"] = floatResult;
-
+  
   //Serial.println(interruptCounter);
   jsonDoc2["Cycle_time(s)"] = int_elapsedTime;  
 
   //Serial.println(interruptCounter);
   jsonDoc2["RPM"] = rpm;  
+  */
+
+  //L1 - Phase to Neutral Voltage
+  dataAddress = 0x00;
+  floatResult = readFloatData(dataAddress) * 10;
+  if (floatResult <0){floatResult = 0;}
+  Serial.println("L1 - Phase to Neutral Voltage : " + String(floatResult) + "V");
+  jsonDoc2["L1-P2N-Vol"] = floatResult;
+
+  //L2 - Phase to Neutral Voltage
+  dataAddress = 0x0A;
+  floatResult = readFloatData(dataAddress) * 10;
+  if (floatResult <0){floatResult = 0;}
+  Serial.println("L2 - Phase to Neutral Voltage : " + String(floatResult) + "V");
+  jsonDoc2["L2-P2N-Vol"] = floatResult;
+
+  //L3 - Phase to Neutral Voltage
+  dataAddress = 0x14;
+  floatResult = readFloatData(dataAddress) * 10;
+  if (floatResult <0){floatResult = 0;}
+  Serial.println("L3 - Phase to Neutral Voltage : " + String(floatResult) + "V");
+  jsonDoc2["L3-P2N-Vol"] = floatResult;
 
   // Serialize the JSON objects to a strings
   char jsonString1[350];
