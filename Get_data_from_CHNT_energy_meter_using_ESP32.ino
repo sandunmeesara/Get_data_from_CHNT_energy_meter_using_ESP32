@@ -11,10 +11,10 @@ const char* ssid = "ENG";
 const char* password = "123456789#";
 
 // Replace with your MQTT broker details
-const char* mqtt_server = "*******************";
+const char* mqtt_server = "192.168.1.50";
 const int mqtt_port = 1883; // Default MQTT port
-const char* mqtt_user = "*******************";
-const char* mqtt_password = "*******************";
+const char* mqtt_user = "Mosq_Admin";
+const char* mqtt_password = "iot@MPLmqtt24";
 
 // Replace with your sensor topic
 
