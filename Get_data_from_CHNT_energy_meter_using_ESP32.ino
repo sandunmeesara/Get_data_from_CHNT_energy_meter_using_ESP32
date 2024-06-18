@@ -11,16 +11,16 @@ const char* ssid = "ENG";
 const char* password = "123456789#";
 
 // Replace with your MQTT broker details
-const char* mqtt_server = "*******************";
+const char* mqtt_server = "192.168.1.50";
 const int mqtt_port = 1883; // Default MQTT port
-const char* mqtt_user = "*******************";
-const char* mqtt_password = "*******************";
+const char* mqtt_user = "Mosq_Admin";
+const char* mqtt_password = "iot@MPLmqtt24";
 
 // Replace with your sensor topic
 
 //const char* sensor_topic = "54K-1";
-const char* sensor_topic = "54K-2";
-//const char* sensor_topic = "OMSO-I";
+//const char* sensor_topic = "54K-2";
+const char* sensor_topic = "OMSO-I";
 //const char* sensor_topic = "OMSO-II";
 //const char* sensor_topic = "EX-02";
 
@@ -46,6 +46,7 @@ int dataAddress;
 uint16_t UrAt,IrAt;
 float floatResult;
 int count_for_reboot = 0;
+int count_for_reboot_due_to_msg_failed = 0;
 
 //Variables and Constants for Sensor
 const int sensorPin = 5; // Pin connected to the proximity sensor
@@ -424,7 +425,9 @@ void modbusTask(void* parameter) {
   if (client.publish(sensor_topic, jsonString1)) {
     Serial.println("Message1 sent to MQTT successfully");
     telnetClient.println("Message1 sent to MQTT successfully");
+    count_for_reboot_due_to_msg_failed = 0;
   } else {
+    count_for_reboot_due_to_msg_failed += 1;
     Serial.println("Failed to publish message1 to MQTT");
     telnetClient.println("Failed to publish message1 to MQTT");
   }
@@ -432,16 +435,16 @@ void modbusTask(void* parameter) {
   if (client.publish(sensor_topic, jsonString2)) {
     Serial.println("Message2 sent to MQTT successfully");
     telnetClient.println("Message2 sent to MQTT successfully");
+    count_for_reboot_due_to_msg_failed = 0;
   } else {
+    count_for_reboot_due_to_msg_failed += 1;
     Serial.println("Failed to publish message2 to MQTT");
     telnetClient.println("Failed to publish message2 to MQTT");
+  }
 
-    count_for_reboot += 1;
-    if(count_for_reboot > 2){
-      telnetClient.println("Rebooting...");
+  if(count_for_reboot_due_to_msg_failed > 6){
+      telnetClient.println("Rebooting Due to MQTT msg send failure...");
       ESP.restart();
-    }
-
   }
 
   Serial.print("MQTT Connection State: ");
