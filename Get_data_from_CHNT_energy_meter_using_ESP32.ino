@@ -24,6 +24,11 @@ const char* sensor_topic = "OMSO-I";
 //const char* sensor_topic = "OMSO-II";
 //const char* sensor_topic = "EX-02";
 
+// Blue LED Indications
+// Blinking 3 times in 250ms interval: Wi-Fi succefully connected! 
+// Stay on : MQTT succefully connected!
+// Blinking 1 time in 100ms interval: Encouter an error!
+
 const int Int_Threshold = 1500;
 
 //Pin define for max 485 module
@@ -64,6 +69,9 @@ void modbusTask(void* parameter);
 void interruptTask(void* parameter);
 void IRAM_ATTR handleInterrupt();
 
+//for error handling
+bool error_encountered = false;
+
 void setup() {
 
   pinMode(2,OUTPUT); // Onboard Blue LED for MQTT connected indication
@@ -98,6 +106,11 @@ void setup() {
 // Local Functions for Tasks
 
 void processError() {
+  //error indication
+  digitalWrite(2, LOW);
+  vTaskDelay(pdMS_TO_TICKS(100));
+  digitalWrite(2, HIGH);
+
   if (modbus.getTimeoutFlag()) {
     telnetClient.println("Connection timed out");
     modbus.clearTimeoutFlag();
@@ -159,11 +172,15 @@ void IRAM_ATTR handleInterrupt() {
 uint16_t readIntData(int dataAddress){
   if(modbus.readHoldingRegisters(1, dataAddress, holdingRegisters,1)){
     x = holdingRegisters[0];
+    error_encountered = false;
     return x;
   }else{
     telnetClient.println("Encountering errors when reading single holding registers!");
+    Serial.println("Encountering errors when reading single holding registers!");
     client.publish(sensor_topic, "{Sin.Hol.Reg.Error:-1}",true);
     processError();
+    error_encountered = true;
+    return 0;
   }
 }
 
@@ -172,11 +189,15 @@ float readFloatData(int dataAddress){
     total = ((uint32_t)holdingRegisters[0]<<16) | holdingRegisters[1];
     String hexString = String(total, HEX);
     float floatResult = hexToFloat(hexString);
+    error_encountered = false;
     return floatResult;
   }else{
     telnetClient.println("Encountering errors when reading double holding registers!");
+    Serial.println("Encountering errors when reading double holding registers!");
     client.publish(sensor_topic, "{Dou.Hol.Reg.Error:-1}",true);
     processError();
+    error_encountered = true;
+    return 0;
   }
 }
 
@@ -216,6 +237,13 @@ void SetupOTA(const char* OTA_Hostname,const char* OTA_Password) {
     Serial.println("Connection Failed! Rebooting...");
     vTaskDelay(pdMS_TO_TICKS(1000));
     ESP.restart();
+  }
+
+  for(int i = 0;i<3;i++){ //Blue LED indicator for wifi connected successfully.
+    digitalWrite(2, HIGH);
+    vTaskDelay(pdMS_TO_TICKS(250));
+    digitalWrite(2, LOW);
+    vTaskDelay(pdMS_TO_TICKS(250));
   }
 
   // Hostname defaults to esp32-[MAC]
@@ -280,6 +308,10 @@ void modbusTask(void* parameter) {
   //print Current Transformer Rate(IrAt)
   dataAddress = 0x06;
   IrAt = readIntData(dataAddress);
+  if(error_encountered == true){
+    continue;
+  }
+
   // Removing spikes
   if(IrAt != 27){
     telnetClient.println("Encountering Spikes!");
@@ -290,6 +322,9 @@ void modbusTask(void* parameter) {
   //print Voltage Transformer Rate(UrAt)
   dataAddress = 0x07;
   UrAt = readIntData(dataAddress);
+  if(error_encountered == true){
+    continue;
+  }
 
   // Removing spikes
   if(UrAt != 10){
@@ -386,12 +421,18 @@ void modbusTask(void* parameter) {
   //print Frequency
   dataAddress = 0x2044;
   floatResult = readFloatData(dataAddress) * 0.01;
+  if(error_encountered == true){
+    continue;
+  }
   Serial.println("Frequency : " + String(floatResult) + "Hz");
   jsonDoc2["Freq"] = floatResult;
 
   //print Forward Total Active Energy - ImpEp
   dataAddress = 0x101E;
   floatResult = readFloatData(dataAddress) * UrAt * 0.1 * IrAt;
+  if(error_encountered == true){
+    continue;
+  }
   Serial.println("Forward total active energy(ImpEp)  : " + String(floatResult) + "kWh");
   jsonDoc2["ImpEp"] = floatResult;
 
