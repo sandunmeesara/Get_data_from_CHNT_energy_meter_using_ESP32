@@ -19,8 +19,8 @@ const char* mqtt_password = "iot@MPLmqtt24";
 // Replace with your sensor topic
 
 //const char* sensor_topic = "54K-1";
-//const char* sensor_topic = "54K-2";
-const char* sensor_topic = "OMSO-I";
+const char* sensor_topic = "54K-2";
+//const char* sensor_topic = "OMSO-I";
 //const char* sensor_topic = "OMSO-II";
 //const char* sensor_topic = "EX-02";
 
@@ -234,6 +234,19 @@ void SetupOTA(const char* OTA_Hostname,const char* OTA_Password) {
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   while (WiFi.waitForConnectResult() != WL_CONNECTED) {
+    if(WiFi.waitForConnectResult() == WL_NO_SSID_AVAIL){
+      Serial.println("Can't find SSID!");
+    }
+    if(WiFi.waitForConnectResult() == WL_CONNECT_FAILED){
+      Serial.println("Can't connect to network!");
+    }
+    if(WiFi.waitForConnectResult() == WL_IDLE_STATUS){
+      Serial.println("The Wi-Fi is in IDLE!");
+    }
+    if(WiFi.waitForConnectResult() == WL_DISCONNECTED){
+      Serial.println("The Wi-Fi is in Disconnected!");
+    }
+    
     Serial.println("Connection Failed! Rebooting...");
     vTaskDelay(pdMS_TO_TICKS(1000));
     ESP.restart();
@@ -245,6 +258,7 @@ void SetupOTA(const char* OTA_Hostname,const char* OTA_Password) {
     digitalWrite(2, LOW);
     vTaskDelay(pdMS_TO_TICKS(250));
   }
+  Serial.println("Wi-Fi is connected successfully!");
 
   // Hostname defaults to esp32-[MAC]
   ArduinoOTA.setHostname(OTA_Hostname);
