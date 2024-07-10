@@ -19,15 +19,15 @@ const char* mqtt_password = "iot@MPLmqtt24";
 // Replace with your sensor topic
 
 //const char* sensor_topic = "54K-1";
-const char* sensor_topic = "54K-2";
+//const char* sensor_topic = "54K-2";
 //const char* sensor_topic = "OMSO-I";
-//const char* sensor_topic = "OMSO-II";
+const char* sensor_topic = "OMSO-II";
 //const char* sensor_topic = "EX-02";
 
 // Blue LED Indications
 // Blinking 3 times in 250ms interval: Wi-Fi succefully connected! 
-// Stay on : MQTT succefully connected!
-// Blinking 1 time in 100ms interval: Encouter an error!
+// LED stay on : MQTT succefully connected!
+// Blinking 1 time in 100ms interval: Encoutered an error!
 
 const int Int_Threshold = 1500;
 
@@ -52,6 +52,7 @@ uint16_t UrAt,IrAt;
 float floatResult;
 int count_for_reboot = 0;
 int count_for_reboot_due_to_msg_failed = 0;
+int count_for_reboot_due_to_wifi_failed = 0;
 
 //Variables and Constants for Sensor
 const int sensorPin = 5; // Pin connected to the proximity sensor
@@ -112,7 +113,7 @@ void processError() {
   digitalWrite(2, HIGH);
 
   if (modbus.getTimeoutFlag()) {
-    telnetClient.println("Connection timed out");
+    telnetClient.println("Connection timed out!");
     modbus.clearTimeoutFlag();
   }else {
     telnetClient.println("Received exception response: ");
@@ -138,8 +139,8 @@ void Reconnect() {
       telnetClient.println(" try again in 1 seconds");
 
       count_for_reboot += 1;
-      if(count_for_reboot > 2){
-        telnetClient.println("Rebooting...");
+      if(count_for_reboot > 10){
+        telnetClient.println("Can't connect to the MQTT Server! Rebooting...");
         ESP.restart();
       }
       vTaskDelay(pdMS_TO_TICKS(1000));
@@ -247,9 +248,12 @@ void SetupOTA(const char* OTA_Hostname,const char* OTA_Password) {
       Serial.println("The Wi-Fi is in Disconnected!");
     }
     
-    Serial.println("Connection Failed! Rebooting...");
-    vTaskDelay(pdMS_TO_TICKS(1000));
-    ESP.restart();
+    count_for_reboot_due_to_wifi_failed += 1;
+    if(count_for_reboot_due_to_wifi_failed > 10){
+      Serial.println("Can't connect to the Wi-Fi! Rebooting...");
+      vTaskDelay(pdMS_TO_TICKS(1000));
+      ESP.restart();
+    }
   }
 
   for(int i = 0;i<3;i++){ //Blue LED indicator for wifi connected successfully.
@@ -497,7 +501,7 @@ void modbusTask(void* parameter) {
     telnetClient.println("Failed to publish message2 to MQTT");
   }
 
-  if(count_for_reboot_due_to_msg_failed > 6){
+  if(count_for_reboot_due_to_msg_failed > 10){
       telnetClient.println("Rebooting Due to MQTT msg send failure...");
       ESP.restart();
   }
