@@ -18,11 +18,29 @@ const char* mqtt_password = "iot@MPLmqtt24";
 
 // Replace with your sensor topic
 
-//const char* sensor_topic = "54K-1";
+const char* sensor_topic = "54K-1";
 //const char* sensor_topic = "54K-2";
 //const char* sensor_topic = "OMSO-I";
-const char* sensor_topic = "OMSO-II";
+//const char* sensor_topic = "OMSO-II";
 //const char* sensor_topic = "EX-02";
+
+
+// Set your Static IP address
+IPAddress local_IP(192, 168, 1, 184); // Change to your desired static IP
+
+
+//Do not change below code!
+// ------------------------------------------------------------------------------------------------------------------------------------
+
+// Set your Gateway IP address
+IPAddress gateway(192, 168, 1, 1);
+
+// Set your Subnet Mask
+IPAddress subnet(255, 255, 255, 0);
+
+// Set DNS servers
+IPAddress primaryDNS(8, 8, 8, 8);   // Optional
+IPAddress secondaryDNS(8, 8, 4, 4); // Optional
 
 // Blue LED Indications
 // Blinking 3 times in 250ms interval: Wi-Fi succefully connected! 
@@ -233,7 +251,14 @@ void SetupOTA(const char* OTA_Hostname,const char* OTA_Password) {
 
   Serial.println("MPL-Sensor-Node is Booting...");
   WiFi.mode(WIFI_STA);
+
+  // Configuring the static IP
+  if (!WiFi.config(local_IP, gateway, subnet, primaryDNS, secondaryDNS)) {
+    Serial.println("STA Failed to configure");
+  }
+
   WiFi.begin(ssid, password);
+
   while (WiFi.waitForConnectResult() != WL_CONNECTED) {
     if(WiFi.waitForConnectResult() == WL_NO_SSID_AVAIL){
       Serial.println("Can't find SSID!");
