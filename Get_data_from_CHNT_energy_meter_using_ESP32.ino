@@ -18,15 +18,15 @@ const char* mqtt_password = "iot@MPLmqtt24";
 
 // Replace with your sensor topic
 
-const char* sensor_topic = "54K-1";
-//const char* sensor_topic = "54K-2";
-//const char* sensor_topic = "OMSO-I";
-//const char* sensor_topic = "OMSO-II";
-//const char* sensor_topic = "EX-02";
+//const char* sensor_topic = "54K-1";IPAddress local_IP(192, 168, 1, 151);
+//const char* sensor_topic = "54K-2";IPAddress local_IP(192, 168, 1, 152);
+//const char* sensor_topic = "OMSO-I";IPAddress local_IP(192, 168, 1, 153);
+//const char* sensor_topic = "OMSO-II";IPAddress local_IP(192, 168, 1, 154);
+const char* sensor_topic = "EX-02";IPAddress local_IP(192, 168, 1, 155);
 
 
 // Set your Static IP address
-IPAddress local_IP(192, 168, 1, 184); // Change to your desired static IP
+//IPAddress local_IP(192, 168, 1, 61); // Change to your desired static IP
 
 
 //Do not change below code!
