@@ -7,22 +7,22 @@
 #include <ArduinoOTA.h>
 
 // Replace with your WiFi credentials
-const char* ssid = "ENG";
-const char* password = "123456789#";
+const char* ssid = "YOUR_WIFI_SSID";
+const char* password = "YOUR_WIFI_PASSWORD";
 
 // Replace with your MQTT broker details
-const char* mqtt_server = "192.168.1.50";
-const int mqtt_port = 1883; // Default MQTT port
-const char* mqtt_user = "Mosq_Admin";
-const char* mqtt_password = "iot@MPLmqtt24";
+const char* mqtt_server = "YOUR_MQTT_IP";
+const int mqtt_port = YOUR_MQTT_PORT; // Default MQTT port
+const char* mqtt_user = "YOUR_MQTT_USERNAME";
+const char* mqtt_password = "YOUR_MQTT_PASSWORD";
 
 // Replace with your sensor topic
 
 //const char* sensor_topic = "54K-1";IPAddress local_IP(192, 168, 1, 151);
-//const char* sensor_topic = "54K-2";IPAddress local_IP(192, 168, 1, 152);
+const char* sensor_topic = "54K-2";IPAddress local_IP(192, 168, 1, 152);
 //const char* sensor_topic = "OMSO-I";IPAddress local_IP(192, 168, 1, 153);
 //const char* sensor_topic = "OMSO-II";IPAddress local_IP(192, 168, 1, 154);
-const char* sensor_topic = "EX-02";IPAddress local_IP(192, 168, 1, 155);
+//const char* sensor_topic = "EX-02";IPAddress local_IP(192, 168, 1, 155);
 
 
 // Set your Static IP address
